@@ -1,6 +1,10 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
+
+    // Add this line exactly like this:
+    id("com.google.android.libraries.mapsplatform.secrets-gradle-plugin")
+
     alias(libs.plugins.google.gms.google.services)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.ksp)
