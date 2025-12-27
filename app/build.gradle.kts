@@ -14,7 +14,7 @@ plugins {
 
 android {
     namespace = "com.example.foundit"
-    compileSdk = 35
+    compileSdk = 35 // This is the version used to compile the app
 
     signingConfigs {
         create("release") {
@@ -27,8 +27,8 @@ android {
     }
     defaultConfig {
         applicationId = "com.example.foundit"
-        minSdk = 29
-        targetSdk = 34
+        minSdk = 33
+        targetSdk = 35  // <--- CHANGE THIS FROM 34 TO 35
         versionCode = 1
         versionName = "1.0.0"
 
@@ -61,6 +61,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true // Add this line here
     }
 
     packaging {

@@ -73,7 +73,7 @@ fun AboutScreen(
             }
 
             val displayedText = if (isAnimationStarted) {
-                "$versionPrefix " + appVersion.substring(0, (animatedProgress.value * appVersion.length).toInt())
+                "$versionPrefix " + appVersion.take((animatedProgress.value * appVersion.length).toInt())
             } else {
                 ""
             }
@@ -108,7 +108,7 @@ fun appVersion(context: Context): String {
                 // FIX: Use the Elvis operator (?:) to provide a default value if info.versionName is null
                 versionName = info.versionName ?: "Unknown"
 
-            } catch (e: PackageManager.NameNotFoundException) {
+            } catch (_: PackageManager.NameNotFoundException) {
                 versionName = "X.XX.XX"
             }
         }

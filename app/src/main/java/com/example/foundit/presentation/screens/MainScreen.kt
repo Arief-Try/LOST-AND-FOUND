@@ -86,7 +86,7 @@ fun MainScreen(modifier: Modifier) {
     ) {innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = NavRoutes.HOME,
+            startDestination = NavRoutes.SPLASH, // Change back to Splash
             modifier = modifier.padding(innerPadding)
         ) {
 
