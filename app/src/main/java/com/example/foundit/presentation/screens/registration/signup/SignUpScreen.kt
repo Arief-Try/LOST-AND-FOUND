@@ -1,9 +1,6 @@
 package com.example.foundit.presentation.screens.registration.signup
 
-import android.util.Log
 import android.widget.Toast
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
@@ -48,7 +45,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -67,23 +63,21 @@ import com.example.foundit.presentation.data.navigation.NavRoutes
 import com.example.foundit.presentation.screens.registration.components.ClickableTextToNavigationRoute
 import com.example.foundit.presentation.screens.registration.components.OrDivider
 import com.example.foundit.presentation.screens.registration.components.google.ContinueWithGoogleCard
-import com.example.foundit.presentation.screens.registration.components.google.ContinueWithGoogleViewModel
 import com.example.foundit.ui.theme.MainGreen
 import com.example.foundit.ui.theme.Righteous
-import com.google.android.gms.location.LocationServices
 import com.google.firebase.FirebaseNetworkException
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.FirebaseAuthUserCollisionException
 import com.google.firebase.auth.FirebaseAuthWeakPasswordException
-import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SignUpScreen(
-    modifier: Modifier = Modifier,
+    modifier: Modifier,
+    navController: NavController,
     signUpViewModel: SignUpViewModel,
-    continueWithGoogleViewModel: ContinueWithGoogleViewModel,
-    navController: NavController
+    // continueWithGoogleViewModel: ContinueWithGoogleViewModel, <-- REMOVE THIS
+    onGoogleSignInClick: () -> Unit // Keep this
 ) {
     var firstName by remember { mutableStateOf("") }
     var lastName by remember { mutableStateOf("") }
@@ -470,26 +464,15 @@ fun SignUpScreen(
             OrDivider()
 
 
+            OrDivider(modifier = modifier)
+
+            // This is the fixed version
             ContinueWithGoogleCard(
                 modifier = modifier,
-                continueWithGoogleViewModel = continueWithGoogleViewModel,
-            ) { credential ->
-                signUpViewModel.onSignUpWithGoogle(credential) { result ->
-                    when (result) {
-                        SignUpViewModel.SignInResult.Success -> {
-                            Log.d("SignUp", "User created successfully")
-                            navController.navigate(NavRoutes.HOME)
-                        }
+                onClick = { onGoogleSignInClick() }
+            )
 
-                        is SignUpViewModel.SignInResult.Failure -> {
-                            Log.d(
-                                "SignUp",
-                                "Authentication failed: Code ${result.errorCode}, Message: ${result.errorMessage}"
-                            )
-                        }
-                    }
-                }
-            }
+            Spacer(modifier = modifier.weight(.3f))
 
             Spacer(modifier = modifier.weight(.3f))
 

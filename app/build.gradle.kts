@@ -16,15 +16,6 @@ android {
     namespace = "com.example.foundit"
     compileSdk = 35 // This is the version used to compile the app
 
-    signingConfigs {
-        create("release") {
-            keyAlias = "key0"
-            keyPassword = "Musaibkey"
-            storeFile = file("C:\\Users\\user\\Desktop\\apps\\foundit_jks.jks")
-            storePassword = "Musaibkey"
-
-        }
-    }
     defaultConfig {
         applicationId = "com.example.foundit"
         minSdk = 33
@@ -36,13 +27,30 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
+
+        buildConfigField(
+            "String",
+            "SUPABASE_URL",
+            "\"${project.findProperty("SUPABASE_URL") ?: ""}\""
+        )
+
+        buildConfigField(
+            "String",
+            "SUPABASE_ANON_KEY",
+            "\"${project.findProperty("SUPABASE_ANON_KEY") ?: ""}\""
+        )
+
+        buildConfigField(
+            "String",
+            "WEB_CLIENT_ID",
+            "\"${project.findProperty("WEB_CLIENT_ID") ?: ""}\""
+        )
+
     }
 
     buildTypes {
         release {
-            getByName("release") {
-                signingConfig = signingConfigs.getByName("release")
-            }
+
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -160,6 +168,15 @@ dependencies {
 
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+
+    // Supabase
+    implementation(platform("io.github.jan-tennert.supabase:bom:3.1.0"))
+    implementation("io.github.jan-tennert.supabase:auth-kt")
+    implementation("io.github.jan-tennert.supabase:postgrest-kt")
+
+// Ktor
+    implementation("io.ktor:ktor-client-android:3.0.1")
+
 
 
 

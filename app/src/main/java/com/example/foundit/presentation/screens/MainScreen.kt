@@ -1,12 +1,18 @@
 package com.example.foundit.presentation.screens
 
+// Make sure to import your new AuthViewModel
 import android.os.Build
+import android.util.Log
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -15,6 +21,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.foundit.auth.AuthViewModel
 import com.example.foundit.presentation.data.navigation.NavRoutes
 import com.example.foundit.presentation.navigation.NavigationBar
 import com.example.foundit.presentation.screens.documentation.PrivacyPolicyScreen
@@ -31,7 +38,6 @@ import com.example.foundit.presentation.screens.progress.components.MatchedCardF
 import com.example.foundit.presentation.screens.progress.components.ProgressCardFullScreen
 import com.example.foundit.presentation.screens.registration.ForgotPasswordScreen
 import com.example.foundit.presentation.screens.registration.GetStartedScreen
-import com.example.foundit.presentation.screens.registration.components.google.ContinueWithGoogleViewModel
 import com.example.foundit.presentation.screens.registration.login.LoginScreen
 import com.example.foundit.presentation.screens.registration.login.LoginViewModel
 import com.example.foundit.presentation.screens.registration.signup.SignUpScreen
@@ -51,50 +57,104 @@ import com.example.foundit.presentation.screens.settings.components.clickable.he
 import com.example.foundit.presentation.screens.settings.components.clickable.help_and_Support.HelpAndSupportScreen
 import com.example.foundit.presentation.screens.settings.components.clickable.help_and_Support.ReportBugScreen
 import com.example.foundit.presentation.screens.settings.components.clickable.security.SecurityScreen
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.common.api.ApiException
 import com.example.foundit.presentation.splash.SplashScreen
 
-
-// Helper function to get the current route
-@Composable
-fun currentRoute(navController: NavHostController): String {
-    val navBackStackEntry by navController.currentBackStackEntryAsState()
-    return navBackStackEntry?.destination?.route ?: ""
-}
 
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Composable
 fun MainScreen(modifier: Modifier) {
     val navController = rememberNavController()
-    val currentRoute = currentRoute(navController)
+    val currentNavRoute = currentRoute(navController)
+    val context = LocalContext.current
 
-    // ViewModels Instances
+    val authViewModel: AuthViewModel = hiltViewModel()
     val loginViewModel: LoginViewModel = hiltViewModel()
     val signUpViewModel: SignUpViewModel = hiltViewModel()
     val profileViewModel: ProfileViewModel = hiltViewModel()
-    val continueWithGoogleViewModel: ContinueWithGoogleViewModel = hiltViewModel()
     val notificationBaseViewModel: NotificationBaseViewModel = hiltViewModel()
+
+    val googleLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+        try {
+            val account = task.getResult(ApiException::class.java)
+            val token = account?.idToken
+
+            if (token != null) {
+                Log.d("AUTH", "Google Token obtained successfully")
+                authViewModel.signInWithSupabase(token) { success ->
+                    if (success) {
+                        navController.navigate(NavRoutes.HOME) {
+                            popUpTo(NavRoutes.LOGIN) { inclusive = true }
+                        }
+                    } else {
+                        // This toast appears if Supabase rejects the token
+                        Toast.makeText(context, "Supabase Handshake Failed. Check Logcat for AUTH_ERROR.", Toast.LENGTH_LONG).show()
+                    }
+                }
+            } else {
+                Log.e("AUTH", "Google Token was NULL. Is your Web Client ID correct in AuthModule?")
+                Toast.makeText(context, "Error: Google Token is Null", Toast.LENGTH_SHORT).show()
+            }
+        } catch (e: ApiException) {
+            Log.e("AUTH", "Google Sign-In failed code: ${e.statusCode}")
+            Toast.makeText(context, "Google Error: ${e.statusCode}", Toast.LENGTH_LONG).show()
+        }
+    }
 
     Scaffold(
         bottomBar = {
-
-            // Conditionally include the NavigationBar based on the current route
-            if (shouldShowBottomBar(currentRoute)) {
+            if (shouldShowBottomBar(currentNavRoute)) {
                 NavigationBar(modifier = modifier, navController = navController)
             }
         },
-
-    ) {innerPadding ->
+    ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = NavRoutes.SPLASH, // Change back to Splash
+            startDestination = NavRoutes.SPLASH, // Start here
             modifier = modifier.padding(innerPadding)
         ) {
-
+            // FIX: Adding the missing Splash route
             composable(NavRoutes.SPLASH) {
-                SplashScreen(navController = navController, forwardNavigation = NavRoutes.GET_STARTED)
+                SplashScreen(
+                    navController = navController,
+                    forwardNavigation = NavRoutes.GET_STARTED
+                )
             }
 
-            // Screens WITH Navigation Bar
+            composable(NavRoutes.GET_STARTED) {
+                GetStartedScreen(modifier = modifier, navController = navController, forwardNavigation = NavRoutes.SIGN_UP)
+            }
+
+            composable(NavRoutes.LOGIN) {
+                LoginScreen(
+                    modifier = modifier,
+                    navController = navController,
+                    loginViewModel = loginViewModel,
+                    onGoogleSignInClick = {
+                        try {
+                            googleLauncher.launch(authViewModel.getSignInIntent())
+                        } catch (e: Exception) {
+                            Toast.makeText(context, "Intent Failed: ${e.message}", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                )
+            }
+
+            composable(NavRoutes.SIGN_UP) {
+                SignUpScreen(
+                    modifier = modifier,
+                    navController = navController,
+                    signUpViewModel = signUpViewModel,
+                    onGoogleSignInClick = {
+                        googleLauncher.launch(authViewModel.getSignInIntent())
+                    }
+                )
+            }
+
             composable(NavRoutes.HOME) {
                 HomeScreen(
                     modifier = modifier,
@@ -222,20 +282,33 @@ fun MainScreen(modifier: Modifier) {
                 ChangePhoneNumberScreen(modifier = modifier, navController = navController)
             }
 
-
-            // Screens WITHOUT Navigation Bar
             composable(NavRoutes.LOGIN) {
-                LoginScreen(modifier = modifier, navController = navController, loginViewModel = loginViewModel, continueWithGoogleViewModel = continueWithGoogleViewModel)
+                LoginScreen(
+                    modifier = modifier,
+                    navController = navController,
+                    loginViewModel = loginViewModel,
+                    // Pass the launcher and the intent here
+                    onGoogleSignInClick = {
+                        googleLauncher.launch(authViewModel.getSignInIntent())
+                    }
+                )
             }
 
             composable(NavRoutes.SIGN_UP) {
-                SignUpScreen(modifier = modifier, navController = navController, signUpViewModel = signUpViewModel, continueWithGoogleViewModel = continueWithGoogleViewModel)
+                SignUpScreen(
+                    modifier = modifier,
+                    navController = navController,
+                    signUpViewModel = signUpViewModel,
+                    onGoogleSignInClick = {
+                        googleLauncher.launch(authViewModel.getSignInIntent())
+                    }
+                )
             }
 
             composable(NavRoutes.GET_STARTED) {
                 GetStartedScreen(modifier = modifier, navController = navController, forwardNavigation = NavRoutes.SIGN_UP)
-
             }
+
             composable(NavRoutes.FORGOT_PASSWORD) {
                 ForgotPasswordScreen(modifier = modifier, navController = navController)
             }
@@ -247,18 +320,22 @@ fun MainScreen(modifier: Modifier) {
     }
 }
 
-// Helper function to determine if the navigation bar should be shown
+@Composable
+fun currentRoute(navController: NavHostController): String? {
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    return navBackStackEntry?.destination?.route
+}
+
 @Composable
 fun shouldShowBottomBar(currentRoute: String?): Boolean {
     return when (currentRoute) {
         NavRoutes.HOME,
         NavRoutes.PROGRESS,
         NavRoutes.NOTIFICATIONS,
-        NavRoutes.PROFILE, -> true
+        NavRoutes.PROFILE -> true
         else -> false
     }
 }
-
 
 
 

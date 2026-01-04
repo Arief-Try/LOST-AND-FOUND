@@ -49,7 +49,6 @@ import com.example.foundit.presentation.data.navigation.NavRoutes
 import com.example.foundit.presentation.screens.registration.components.ClickableTextToNavigationRoute
 import com.example.foundit.presentation.screens.registration.components.google.ContinueWithGoogleCard
 import com.example.foundit.presentation.screens.registration.components.OrDivider
-import com.example.foundit.presentation.screens.registration.components.google.ContinueWithGoogleViewModel
 import com.example.foundit.ui.theme.MainGreen
 import com.example.foundit.ui.theme.Righteous
 import com.google.firebase.FirebaseNetworkException
@@ -60,8 +59,8 @@ import com.google.firebase.auth.FirebaseAuthInvalidUserException
 fun LoginScreen(
     modifier: Modifier,
     loginViewModel: LoginViewModel,
-    continueWithGoogleViewModel: ContinueWithGoogleViewModel,
-    navController: NavController
+    navController: NavController,
+    onGoogleSignInClick: () -> Unit // Add this
 ) {
     val context = LocalContext.current
 
@@ -248,20 +247,13 @@ fun LoginScreen(
 
         OrDivider(modifier = modifier)
 
+        // This is now much cleaner!
         ContinueWithGoogleCard(
             modifier = modifier,
-            //colorScheme = 2,
-            continueWithGoogleViewModel = continueWithGoogleViewModel
-        ){ credential ->
-            loginViewModel.onSignInWithGoogle(credential) { isSuccess ->
-                if (isSuccess) {
-                    Log.d("SignUp", "User created successfully")
-                    navController.navigate(NavRoutes.HOME)
-                } else {
-                    Log.d("SignUp", "Authentication failed")
-                }
-            }
-        }
+            onClick = { onGoogleSignInClick() }
+        )
+
+        Spacer(modifier = modifier.height(50.dp))
 
         Spacer(modifier = modifier.height(50.dp))
 
