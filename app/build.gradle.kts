@@ -16,6 +16,18 @@ android {
     namespace = "com.example.foundit"
     compileSdk = 35 // This is the version used to compile the app
 
+    signingConfigs {
+        create("sharedConfig") {
+            keyAlias = "key0"
+            keyPassword = "Musaibkey"
+            storePassword = "Musaibkey"
+
+            // This is the portable way.
+            // "../" means "go up one folder from 'app', then look in 'signing'"
+            storeFile = file("../signing/foundit_jks.jks")
+        }
+    }
+
     defaultConfig {
         applicationId = "com.example.foundit"
         minSdk = 33
@@ -50,6 +62,8 @@ android {
 
     buildTypes {
         release {
+            // 1. ADD THIS LINE: Links the shared key to your release build
+            signingConfig = signingConfigs.getByName("sharedConfig")
 
             isMinifyEnabled = false
             proguardFiles(
@@ -58,7 +72,13 @@ android {
             )
         }
 
+        debug {
+            // 2. ADD THIS ENTIRE BLOCK: This is the most important part for fixing Error 10
+            // It forces the "testing" version of the app to use your team's shared key.
+            signingConfig = signingConfigs.getByName("sharedConfig")
+        }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
