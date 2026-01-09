@@ -1,23 +1,28 @@
 package com.example.foundit.presentation.screens.registration
 
-
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -29,6 +34,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -36,19 +42,13 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.foundit.presentation.data.navigation.NavRoutes
 import kotlinx.coroutines.delay
-import androidx.compose.foundation.background
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.material3.Button
-import androidx.compose.foundation.layout.Spacer
-
 
 @Composable
 fun GetStartedScreen(
     modifier: Modifier = Modifier,
     navController: NavHostController
 ) {
-    // Keep the animation states
+    // Animation states
     var isVisible by remember { mutableStateOf(false) }
     var isLogoVisible by remember { mutableStateOf(false) }
     var isDescriptionVisible by remember { mutableStateOf(false) }
@@ -64,40 +64,19 @@ fun GetStartedScreen(
         isButtonVisible = true
     }
 
-    // Inside GetStaredScreen_Kt.txt
-    Button(
-        onClick = {
-            // This tells the app to go to the Login screen directly
-            navController.navigate(NavRoutes.LOGIN)
-        },
-        modifier = Modifier
-            .fillMaxWidth(0.8f)
-            .height(55.dp),
-        shape = RoundedCornerShape(30.dp),
-        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF70D4FF))
-    ) {
-        Text(
-            text = "Get Started",
-            fontSize = 18.sp,
-            color = Color.Black,
-            fontWeight = FontWeight.Bold
-        )
-    }
-
     Scaffold { paddingValues ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color(0xFFF2F2F2)) // Light Gray Background
+                .background(Color.White)
                 .padding(paddingValues),
             contentAlignment = Alignment.Center
         ) {
-            // ADDED: verticalScroll makes sure the button is never cut off on small phones
             Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
-                    .padding(24.dp),
+                    .padding(horizontal = 32.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
@@ -108,58 +87,66 @@ fun GetStartedScreen(
                         animationSpec = tween(durationMillis = 1000)
                     ) + fadeIn()
                 ) {
-                    OutlinedCard(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(24.dp),
-                        colors = CardDefaults.outlinedCardColors(containerColor = Color(0xFFD9D9D9)),
-                        border = BorderStroke(1.dp, Color.Gray)
+                    Card(
+                        modifier = Modifier
+                            .width(320.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = Color(0xFFE8E8E8)
+                        ),
+                        border = BorderStroke(2.dp, Color(0xFF70D4FF))
                     ) {
                         Column(
                             modifier = Modifier
-                                .padding(vertical = 40.dp, horizontal = 20.dp),
+                                .padding(horizontal = 32.dp, vertical = 48.dp),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            // Typing Effect with Navy Blue color
-                            TypingTextEffect(
-                                text = "Lost & Found",
-                                textStyle = MaterialTheme.typography.headlineLarge.copy(
-                                    fontWeight = FontWeight.ExtraBold,
-                                    fontSize = 38.sp,
-                                    color = Color(0xFF000080) // Navy Blue
+                            // Title with typing effect
+                            if (isLogoVisible) {
+                                TypingTextEffect(
+                                    text = "Lost & Found",
+                                    textStyle = TextStyle(
+                                        fontWeight = FontWeight.ExtraBold,
+                                        fontSize = 36.sp,
+                                        color = Color(0xFF000080), // Navy Blue
+                                        textAlign = TextAlign.Center
+                                    )
                                 )
-                            )
+                            }
 
-                            Spacer(modifier = Modifier.height(16.dp))
+                            Spacer(modifier = Modifier.height(20.dp))
 
+                            // Subtitle
                             if (isDescriptionVisible) {
                                 Text(
-                                    text = "“Connecting Finders and Owners.”",
-                                    fontSize = 16.sp,
-                                    fontWeight = FontWeight.Bold,
+                                    text = "\"Connecting Finders\nand Owners.\"",
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Medium,
                                     textAlign = TextAlign.Center,
-                                    color = Color.Black
+                                    color = Color.Black,
+                                    lineHeight = 22.sp
                                 )
                             }
 
                             Spacer(modifier = Modifier.height(32.dp))
 
+                            // Get Started Button
                             if (isButtonVisible) {
                                 Button(
                                     onClick = {
-                                        // Navigating to LOGIN as requested
                                         navController.navigate(NavRoutes.LOGIN)
                                     },
                                     modifier = Modifier
-                                        .fillMaxWidth(0.8f)
-                                        .height(55.dp),
-                                    shape = RoundedCornerShape(30.dp),
+                                        .fillMaxWidth()
+                                        .height(50.dp),
+                                    shape = RoundedCornerShape(25.dp),
                                     colors = ButtonDefaults.buttonColors(
-                                        containerColor = Color(0xFF70D4FF) // Light Blue
+                                        containerColor = Color(0xFF70D4FF)
                                     )
                                 ) {
                                     Text(
                                         text = "Get Started",
-                                        fontSize = 18.sp,
+                                        fontSize = 16.sp,
                                         color = Color.Black,
                                         fontWeight = FontWeight.Bold
                                     )
@@ -177,11 +164,11 @@ fun GetStartedScreen(
 fun TypingTextEffect(
     text: String,
     modifier: Modifier = Modifier,
-    textStyle: androidx.compose.ui.text.TextStyle = MaterialTheme.typography.headlineMedium.copy(
+    textStyle: TextStyle = TextStyle(
         fontWeight = FontWeight.Bold,
         fontSize = 24.sp
     ),
-    typingDelay: Long = 150L // Reduced delay for a smoother feel
+    typingDelay: Long = 150L
 ) {
     var displayedText by remember { mutableStateOf("") }
 
