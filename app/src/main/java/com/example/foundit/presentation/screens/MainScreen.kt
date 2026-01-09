@@ -125,8 +125,13 @@ fun MainScreen(modifier: Modifier) {
                 )
             }
 
+            // Find this block in MainScreen_kt.txt
             composable(NavRoutes.GET_STARTED) {
-                GetStartedScreen(modifier = modifier, navController = navController, forwardNavigation = NavRoutes.SIGN_UP)
+                // REMOVE 'forwardNavigation = NavRoutes.SIGN_UP'
+                GetStartedScreen(
+                    modifier = modifier,
+                    navController = navController
+                )
             }
 
             composable(NavRoutes.LOGIN) {
@@ -306,7 +311,11 @@ fun MainScreen(modifier: Modifier) {
             }
 
             composable(NavRoutes.GET_STARTED) {
-                GetStartedScreen(modifier = modifier, navController = navController, forwardNavigation = NavRoutes.SIGN_UP)
+                // REMOVE 'forwardNavigation = NavRoutes.SIGN_UP'
+                GetStartedScreen(
+                    modifier = modifier,
+                    navController = navController
+                )
             }
 
             composable(NavRoutes.FORGOT_PASSWORD) {

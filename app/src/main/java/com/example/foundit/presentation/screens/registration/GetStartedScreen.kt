@@ -1,14 +1,11 @@
 package com.example.foundit.presentation.screens.registration
 
 
-import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
-import androidx.compose.animation.scaleIn
 import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,7 +16,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Scaffold
@@ -33,143 +29,147 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
-import com.example.foundit.R
 import com.example.foundit.presentation.data.navigation.NavRoutes
-import com.example.foundit.ui.theme.LogoColor
-import com.example.foundit.ui.theme.MainGreen
 import kotlinx.coroutines.delay
+import androidx.compose.foundation.background
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.material3.Button
+import androidx.compose.foundation.layout.Spacer
+
 
 @Composable
 fun GetStartedScreen(
     modifier: Modifier = Modifier,
-    forwardNavigation: String,
     navController: NavHostController
 ) {
-
-    var showCard by remember { mutableStateOf(false) }
-    var showImage by remember { mutableStateOf(false) }
-    var showTitle by remember { mutableStateOf(false) }
-    var showDescription by remember { mutableStateOf(false) }
-    var showButton by remember { mutableStateOf(false) }
+    // Keep the animation states
+    var isVisible by remember { mutableStateOf(false) }
+    var isLogoVisible by remember { mutableStateOf(false) }
+    var isDescriptionVisible by remember { mutableStateOf(false) }
+    var isButtonVisible by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
-        showCard = true
-        delay(100)
-        showImage = true
-        delay(1000)
-        showTitle = true
-        delay(1000)
-        showDescription = true
-        delay(2000)
-        showButton = true
+        isVisible = true
+        delay(500)
+        isLogoVisible = true
+        delay(800)
+        isDescriptionVisible = true
+        delay(500)
+        isButtonVisible = true
     }
 
-    Scaffold(
-        modifier = modifier.fillMaxSize(),
-    ) { innerPadding ->
+    // Inside GetStaredScreen_Kt.txt
+    Button(
+        onClick = {
+            // This tells the app to go to the Login screen directly
+            navController.navigate(NavRoutes.LOGIN)
+        },
+        modifier = Modifier
+            .fillMaxWidth(0.8f)
+            .height(55.dp),
+        shape = RoundedCornerShape(30.dp),
+        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF70D4FF))
+    ) {
+        Text(
+            text = "Get Started",
+            fontSize = 18.sp,
+            color = Color.Black,
+            fontWeight = FontWeight.Bold
+        )
+    }
+
+    Scaffold { paddingValues ->
         Box(
-            contentAlignment = Alignment.Center,
-            modifier = modifier
+            modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
-                .padding(16.dp)
+                .background(Color(0xFFF2F2F2)) // Light Gray Background
+                .padding(paddingValues),
+            contentAlignment = Alignment.Center
         ) {
-            AnimatedVisibility(
-                visible = showCard,
-                enter = slideInVertically(
-                    initialOffsetY = { it + 450 },
-                    animationSpec = tween(durationMillis = 2000)
-                )
+            // ADDED: verticalScroll makes sure the button is never cut off on small phones
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
             ) {
-                OutlinedCard(
-                    modifier = modifier
-                        .fillMaxWidth()
-                        .height(390.dp),
-                    shape = RoundedCornerShape(36.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MainGreen.copy(alpha = .15f)
-                    ),
-                    border = BorderStroke(color = LogoColor, width = 1.dp)
+                AnimatedVisibility(
+                    visible = isVisible,
+                    enter = slideInVertically(
+                        initialOffsetY = { it },
+                        animationSpec = tween(durationMillis = 1000)
+                    ) + fadeIn()
                 ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(16.dp),
-                        modifier = modifier
-                            .fillMaxSize()
-                            .padding(horizontal = 16.dp, vertical = 20.dp)
-
+                    OutlinedCard(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(24.dp),
+                        colors = CardDefaults.outlinedCardColors(containerColor = Color(0xFFD9D9D9)),
+                        border = BorderStroke(1.dp, Color.Gray)
                     ) {
-                        AnimatedVisibility(
-                            visible = showImage,
-                            enter = fadeIn(animationSpec = tween(durationMillis = 1500))
+                        Column(
+                            modifier = Modifier
+                                .padding(vertical = 40.dp, horizontal = 20.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            Image(
-                                painter = painterResource(id = R.drawable.app_name_icon),
-                                contentDescription = "Found it Logo",
-                            )
-                        }
-
-                        AnimatedVisibility(
-                            visible = showTitle
-                        ) {
-                            TypingTextEffect(text = "Welcome to Found It", typingDelay = 50)
-                        }
-
-                        AnimatedVisibility(
-                            visible = showDescription,
-                            enter = fadeIn(animationSpec = tween(durationMillis = 3000))
-                        ) {
-                            Text(
-                                text = "Misplaced your keys? Lost your phone? Join our community of helpful finders and seekers. " +
-                                        "This app makes it easy to report lost items and connect with people who may have found them.",
-                                style = MaterialTheme.typography.bodyLarge.copy(
-                                    textAlign = TextAlign.Center
-                                ),
-                                modifier = Modifier.padding(horizontal = 16.dp)
-                            )
-                        }
-
-                        AnimatedVisibility(
-                            visible = showButton,
-                            enter = fadeIn(animationSpec = tween(durationMillis = 200)) + scaleIn(animationSpec = tween(durationMillis = 1000))
-                        ) {
-                            ElevatedButton(
-                                onClick = {
-                                    navController.navigate(forwardNavigation)
-                                },
-                                colors = ButtonDefaults.elevatedButtonColors(
-                                    containerColor = MainGreen,
-                                    contentColor = Color.White
-                                ),
-                                modifier = Modifier
-                                    .fillMaxWidth(0.6f)
-                                    .padding(top = 20.dp)
-                                    .height(52.dp)
-                            ) {
-                                Text(
-                                    text = "Get Started",
-                                    fontSize = 18.sp,
+                            // Typing Effect with Navy Blue color
+                            TypingTextEffect(
+                                text = "Lost & Found",
+                                textStyle = MaterialTheme.typography.headlineLarge.copy(
+                                    fontWeight = FontWeight.ExtraBold,
+                                    fontSize = 38.sp,
+                                    color = Color(0xFF000080) // Navy Blue
                                 )
+                            )
+
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            if (isDescriptionVisible) {
+                                Text(
+                                    text = "“Connecting Finders and Owners.”",
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    textAlign = TextAlign.Center,
+                                    color = Color.Black
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.height(32.dp))
+
+                            if (isButtonVisible) {
+                                Button(
+                                    onClick = {
+                                        // Navigating to LOGIN as requested
+                                        navController.navigate(NavRoutes.LOGIN)
+                                    },
+                                    modifier = Modifier
+                                        .fillMaxWidth(0.8f)
+                                        .height(55.dp),
+                                    shape = RoundedCornerShape(30.dp),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = Color(0xFF70D4FF) // Light Blue
+                                    )
+                                ) {
+                                    Text(
+                                        text = "Get Started",
+                                        fontSize = 18.sp,
+                                        color = Color.Black,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
                             }
                         }
                     }
                 }
             }
         }
-    }
-
-    BackHandler(
-        enabled = true,
-    ) {
-
     }
 }
 
@@ -181,7 +181,7 @@ fun TypingTextEffect(
         fontWeight = FontWeight.Bold,
         fontSize = 24.sp
     ),
-    typingDelay: Long = 300L
+    typingDelay: Long = 150L // Reduced delay for a smoother feel
 ) {
     var displayedText by remember { mutableStateOf("") }
 
@@ -198,15 +198,5 @@ fun TypingTextEffect(
         style = textStyle,
         textAlign = TextAlign.Center,
         modifier = modifier
-    )
-}
-
-
-@Preview(showBackground = true, showSystemUi = true, device = "id:pixel_6_pro")
-@Composable
-fun PreviewGetStartedScreen() {
-    GetStartedScreen(
-        navController = NavHostController(LocalContext.current),
-        forwardNavigation = NavRoutes.HOME
     )
 }
