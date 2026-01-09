@@ -72,85 +72,75 @@ fun GetStartedScreen(
                 .padding(paddingValues),
             contentAlignment = Alignment.Center
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 32.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
+            AnimatedVisibility(
+                visible = isVisible,
+                enter = fadeIn(
+                    animationSpec = tween(durationMillis = 800)
+                )
             ) {
-                AnimatedVisibility(
-                    visible = isVisible,
-                    enter = slideInVertically(
-                        initialOffsetY = { it },
-                        animationSpec = tween(durationMillis = 1000)
-                    ) + fadeIn()
+                Card(
+                    modifier = Modifier
+                        .width(320.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color(0xFFE8E8E8)
+                    ),
+                    border = BorderStroke(2.dp, Color(0xFF70D4FF))
                 ) {
-                    Card(
+                    Column(
                         modifier = Modifier
-                            .width(320.dp),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = Color(0xFFE8E8E8)
-                        ),
-                        border = BorderStroke(2.dp, Color(0xFF70D4FF))
+                            .padding(horizontal = 32.dp, vertical = 48.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Column(
-                            modifier = Modifier
-                                .padding(horizontal = 32.dp, vertical = 48.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            // Title with typing effect
-                            if (isLogoVisible) {
-                                TypingTextEffect(
-                                    text = "Lost & Found",
-                                    textStyle = TextStyle(
-                                        fontWeight = FontWeight.ExtraBold,
-                                        fontSize = 36.sp,
-                                        color = Color(0xFF000080), // Navy Blue
-                                        textAlign = TextAlign.Center
-                                    )
+                        // Title with typing effect
+                        if (isLogoVisible) {
+                            TypingTextEffect(
+                                text = "Lost & Found",
+                                textStyle = TextStyle(
+                                    fontWeight = FontWeight.ExtraBold,
+                                    fontSize = 36.sp,
+                                    color = Color(0xFF000080), // Navy Blue
+                                    textAlign = TextAlign.Center
                                 )
-                            }
+                            )
+                        }
 
-                            Spacer(modifier = Modifier.height(20.dp))
+                        Spacer(modifier = Modifier.height(20.dp))
 
-                            // Subtitle
-                            if (isDescriptionVisible) {
+                        // Subtitle
+                        if (isDescriptionVisible) {
+                            Text(
+                                text = "\"Connecting Finders\nand Owners.\"",
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Medium,
+                                textAlign = TextAlign.Center,
+                                color = Color.Black,
+                                lineHeight = 22.sp
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(32.dp))
+
+                        // Get Started Button
+                        if (isButtonVisible) {
+                            Button(
+                                onClick = {
+                                    navController.navigate(NavRoutes.LOGIN)
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(50.dp),
+                                shape = RoundedCornerShape(25.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color(0xFF70D4FF)
+                                )
+                            ) {
                                 Text(
-                                    text = "\"Connecting Finders\nand Owners.\"",
-                                    fontSize = 15.sp,
-                                    fontWeight = FontWeight.Medium,
-                                    textAlign = TextAlign.Center,
+                                    text = "Get Started",
+                                    fontSize = 16.sp,
                                     color = Color.Black,
-                                    lineHeight = 22.sp
+                                    fontWeight = FontWeight.Bold
                                 )
-                            }
-
-                            Spacer(modifier = Modifier.height(32.dp))
-
-                            // Get Started Button
-                            if (isButtonVisible) {
-                                Button(
-                                    onClick = {
-                                        navController.navigate(NavRoutes.LOGIN)
-                                    },
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(50.dp),
-                                    shape = RoundedCornerShape(25.dp),
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = Color(0xFF70D4FF)
-                                    )
-                                ) {
-                                    Text(
-                                        text = "Get Started",
-                                        fontSize = 16.sp,
-                                        color = Color.Black,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                }
                             }
                         }
                     }
@@ -159,6 +149,7 @@ fun GetStartedScreen(
         }
     }
 }
+
 
 @Composable
 fun TypingTextEffect(
