@@ -114,7 +114,7 @@ fun MainScreen(modifier: Modifier) {
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = NavRoutes.SPLASH, // Start here
+            startDestination = NavRoutes.HOME, // Start here
             modifier = modifier.padding(innerPadding)
         ) {
             // FIX: Adding the missing Splash route
