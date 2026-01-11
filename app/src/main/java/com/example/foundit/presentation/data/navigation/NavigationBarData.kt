@@ -30,12 +30,12 @@ val NavigationItems = listOf(
         unselectedIcon = outline_pending,
         hasNews = true,
     ),
-    BottomNavigationItem(
+   /* BottomNavigationItem(
         title = NavRoutes.NOTIFICATIONS,
         selectedIcon =  filled_notifications,
         unselectedIcon =  outline_notifications,
         hasNews = true,
-    ),
+    ),*/
     BottomNavigationItem(
         title = NavRoutes.PROFILE,
         selectedIcon =  filled_person,

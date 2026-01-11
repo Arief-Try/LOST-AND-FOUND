@@ -1,7 +1,6 @@
 package com.example.foundit.presentation.screens.home
 
 
-import android.annotation.SuppressLint
 import android.app.Activity
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
@@ -13,7 +12,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -22,11 +23,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.example.foundit.R
-import com.example.foundit.presentation.screens.home.components.AppIcon
 import com.example.foundit.presentation.screens.home.components.Greetings
 import com.example.foundit.presentation.screens.home.components.MainCard
 import com.example.foundit.presentation.screens.profile.ProfileViewModel
@@ -35,7 +36,6 @@ import com.example.foundit.ui.theme.MainRed
 
 
 // UI-Only Composable
-@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun HomeScreenContent(
     modifier: Modifier = Modifier,
@@ -45,27 +45,36 @@ fun HomeScreenContent(
     lostButtonClick: String,
     foundButtonClick: String,
 ) {
-    Scaffold {
+    Scaffold(modifier = modifier) { paddingValues ->
         Column(
-            modifier = modifier
+            modifier = Modifier
+                .padding(paddingValues)
                 .fillMaxWidth()
                 .fillMaxHeight()
                 .padding(start = 20.dp, end = 20.dp),
-            //horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            AppIcon(modifier = modifier)
-            Greetings(
-                modifier = modifier,
-                greetingPrefix = greetingPrefix,
-                profileName = profileName
-            )
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 30.dp),
+            ) {
+                Text(
+                    text = "LOST & FOUND",
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                Greetings(
+                    greetingPrefix = greetingPrefix,
+                    profileName = profileName
+                )
+            }
             HorizontalDivider(
                 thickness = 1.dp,
-                modifier = modifier
+                modifier = Modifier
                     .padding(top = 10.dp, start = 10.dp, end = 10.dp)
             )
             Column(
-                modifier = modifier
+                modifier = Modifier
                     .fillMaxSize()
                     .padding(vertical = 20.dp)
                     .verticalScroll(rememberScrollState(), true),
@@ -99,12 +108,12 @@ fun HomeScreenContent(
 // ViewModel Composable
 @Composable
 fun HomeScreen(
-    modifier: Modifier,
+    modifier: Modifier = Modifier,
     viewModel: ProfileViewModel,
     navController: NavHostController,
     lostButtonClick: String,
     foundButtonClick: String,
-) {
+) {// tukar kpd supabase database
     val context = LocalContext.current
     val userFirstName by viewModel.userFirstNames.collectAsState()
     val userLastName by viewModel.userLastNames.collectAsState()
@@ -127,12 +136,11 @@ fun HomeScreen(
 
     BackHandler(
         enabled = true,
-        onBack = { (context as Activity).finish()  }
+        onBack = { (context as Activity).finish() }
     )
 
 
 }
-
 
 
 @Composable
@@ -147,4 +155,3 @@ fun PreviewHomeScreen() {
         foundButtonClick = ""
     )
 }
-

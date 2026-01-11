@@ -21,9 +21,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -32,7 +29,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.FiberManualRecord
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.rounded.LocationOn
 import androidx.compose.material3.Button
@@ -65,8 +61,6 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.example.foundit.presentation.data.navigation.NavRoutes
-import com.example.foundit.presentation.screens.input.common.components.CategoryCard
-import com.example.foundit.presentation.screens.input.data.childCategories
 import com.example.foundit.presentation.screens.progress.ProgressCardFullScreenViewModel
 import com.example.foundit.ui.theme.MainGreen
 import com.example.foundit.ui.theme.MainRed
@@ -74,7 +68,6 @@ import com.example.foundit.ui.theme.RobotFamily
 import com.google.firebase.firestore.FirebaseFirestoreException
 
 
-// to check network connection for deleting the card
 fun isNetworkAvailable(context: Context): Boolean {
     val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
     val network = connectivityManager.activeNetwork
@@ -84,26 +77,22 @@ fun isNetworkAvailable(context: Context): Boolean {
                     networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR))
 }
 
-// For LazyVerticalGrid
 @Composable
 fun ProgressCardFullScreen(
-    modifier: Modifier,
+    modifier: Modifier = Modifier,
     cardId: String,
-    navController: NavHostController// Use Hilt to inject ViewModel
+    navController: NavHostController
 ) {
-    // Collect the card data from the ViewModel
     val viewModel: ProgressCardFullScreenViewModel = hiltViewModel()
     val cardData by viewModel.cardData.collectAsState()
     val matchedCards by viewModel.matchedCards.collectAsState()
 
     val context = LocalContext.current
 
-    // Fetch the data when the composable is first launched
     LaunchedEffect(cardId) {
-        viewModel.fetchCardData(cardId) // Fetch the card data
+        viewModel.fetchCardData(cardId)
     }
 
-    // Display card data
     cardData?.let { data ->
 
         LaunchedEffect(data["matches"]) {
@@ -142,7 +131,6 @@ fun ProgressCardFullScreen(
                 .fillMaxSize()
                 .padding(top = 16.dp, start = 2.dp, end = 4.dp)
         ) {
-            // Top bar with close icon and Lost Item button
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -188,8 +176,8 @@ fun ProgressCardFullScreen(
                             Spacer(modifier = Modifier.size(14.dp))
 
                             CircularProgressIndicator(
-                                progress = { 0.08f },
-                                color = Color.Transparent, // Use color for progress indicator
+                                progress = 0.08f,
+                                color = Color.Transparent,
                                 trackColor = Color.Yellow,
                                 strokeCap = StrokeCap.Round,
                                 modifier = Modifier.size(20.dp),
@@ -202,9 +190,7 @@ fun ProgressCardFullScreen(
 
             Spacer(modifier = modifier.height(8.dp))
 
-
             Column(modifier = modifier.padding(horizontal = 16.dp)) {
-                // Title and location row
                 Column(modifier = modifier.fillMaxWidth()) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -213,22 +199,6 @@ fun ProgressCardFullScreen(
                         Text(
                             text = data["parentCategory"]?.toString() ?: "Unknown",
                             style = MaterialTheme.typography.headlineLarge
-                        )
-
-                        Spacer(modifier.width(8.dp))
-
-                        Icon(
-                            imageVector = Icons.Default.FiberManualRecord,
-                            contentDescription = "Close",
-                            modifier = Modifier
-                                .size(12.dp)
-                        )
-
-                        Spacer(modifier.width(8.dp))
-
-                        Text(
-                            text = data["color"]?.toString() ?: "Unknown Colour",
-                            style = MaterialTheme.typography.headlineMedium
                         )
                     }
 
@@ -253,11 +223,7 @@ fun ProgressCardFullScreen(
                             )
                             Spacer(modifier.width(4.dp))
                             Text(
-                                text = truncateText(
-                                    text = data["locationAddress"]?.toString()
-                                        ?: "Unknown location",
-                                    maxLength = 26
-                                ),
+                                text = (data["locationAddress"]?.toString() ?: "Unknown location").take(26),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = Color.Gray,
                                 overflow = TextOverflow.Ellipsis,
@@ -276,43 +242,6 @@ fun ProgressCardFullScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Lazy grid for white boxes
-                LazyVerticalGrid(
-                    modifier = modifier
-                        .fillMaxWidth()
-                        .height(120.dp)
-                    ,
-                    columns = GridCells.Adaptive(minSize = 102.dp),
-                    horizontalArrangement = Arrangement.Start,
-                    verticalArrangement = Arrangement.Top
-                ) {
-                    val input = data["childCategory"]?.toString()
-                    if (!input.isNullOrEmpty()) {
-                        val charList = input.split(",")
-                            .mapNotNull { it.trim().toIntOrNull() }
-                            .filter { id -> childCategories.any { it.id == id } }
-
-                        Log.d("CharList", "Contents of charList: $charList")
-
-                        val filteredCategories = childCategories.filter { category ->
-                            charList.contains(category.id)
-                        }
-
-                        if (filteredCategories.isNotEmpty()) {
-                            items(filteredCategories) { category ->
-                                CategoryCard(
-                                    modifier = modifier,
-                                    categoryText = category.name,
-                                    borderColor = borderColor
-                                )
-                            }
-                        }
-                    }
-                }
-                Spacer(modifier = modifier.height(16.dp))
-
-
-                // Item description card
                 OutlinedCard(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -345,7 +274,6 @@ fun ProgressCardFullScreen(
                 }
                 Spacer(modifier.height(16.dp))
 
-                // Confirm Button for Lost Item Card
                 if (cardLabel == "Lost" && data["isMatchEmpty"].toString() == "0" && data["status"].toString() == "0") {
                     Column(
                         modifier
@@ -461,7 +389,6 @@ fun ProgressCardFullScreen(
 
 
         if (data["status"].toString() != "1"){
-            // Floating action button for delete
             Box(modifier = modifier.fillMaxSize()) {
                 FloatingActionButton(
                     modifier = modifier
@@ -524,7 +451,7 @@ fun ProgressCardFullScreen(
 
 fun truncateText(text: String, maxLength: Int): String {
     return if (text.length > maxLength) {
-        text.substring(0, maxLength) + "..."
+        text.take(maxLength) + "..."
     } else {
         text
     }
@@ -532,17 +459,11 @@ fun truncateText(text: String, maxLength: Int): String {
 
 @Composable
 fun MatchedCard(
-    modifier: Modifier,
+    modifier: Modifier = Modifier,
     cardItem: Map<String, Any>,
     navController: NavHostController
 ) {
     val context = LocalContext.current
-
-    val cardColor = when (cardItem["cardType"].toString()) {
-        "0" -> MainRed.copy(alpha = 0.65f)
-        "1" -> MainGreen.copy(alpha = 0.65f)
-        else -> Color.Gray.copy(alpha = 0.7f)
-    }
 
     OutlinedCard(
         onClick = {
@@ -556,7 +477,6 @@ fun MatchedCard(
         colors = CardDefaults.cardColors(containerColor = Color.LightGray),
         modifier = modifier
             .fillMaxWidth()
-            //.height(160.dp)
             .padding(top = 16.dp, bottom = 0.dp),
     ) {
         Column (
@@ -598,7 +518,6 @@ fun MatchedCard(
                         )
                         Text(
                             text = cardItem["locationAddress"].toString(),
-                            //textAlign = TextAlign.Center,
                             fontSize = 12.sp,
                             fontStyle = FontStyle.Italic,
                             textDecoration = TextDecoration.Underline
@@ -613,17 +532,9 @@ fun MatchedCard(
 @Composable
 @Preview(showBackground = true, showSystemUi = false)
 fun PreviewProgressCardFullScreen() {
-    val cardItem: Map<String, Any> = mapOf(
-        "cardId" to 1,
-        "cardType" to 0,
-        "date" to "13-May-2024",
-        "category" to "Phone",
-        "location" to "Srinagar, Jammu & Kashmir",
-        "status" to 0
-    )
     ProgressCardFullScreen(
         modifier = Modifier,
-        cardId = cardItem["cardId"].toString(),
+        cardId = "1",
         navController = NavHostController(LocalContext.current)
     )
 }

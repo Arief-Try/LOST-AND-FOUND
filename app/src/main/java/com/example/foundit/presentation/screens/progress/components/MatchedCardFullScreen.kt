@@ -2,7 +2,6 @@ package com.example.foundit.presentation.screens.progress.components
 
 import android.Manifest
 import android.os.Build
-import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
@@ -17,15 +16,11 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.FiberManualRecord
 import androidx.compose.material.icons.rounded.LocationOn
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -59,8 +54,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
-import com.example.foundit.presentation.screens.input.common.components.CategoryCard
-import com.example.foundit.presentation.screens.input.data.childCategories
 import com.example.foundit.presentation.screens.progress.MatchedCardFullScreenViewModel
 import com.example.foundit.ui.theme.LogoColor
 import com.example.foundit.ui.theme.RobotFamily
@@ -68,30 +61,24 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 
-// For LazyVerticalGrid
 @OptIn(ExperimentalPermissionsApi::class, ExperimentalMaterial3Api::class)
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Composable
 fun MatchedCardFullScreen(
-    modifier: Modifier,
+    modifier: Modifier = Modifier,
     cardId: String,
-    navController: NavHostController// Use Hilt to inject ViewModel
+    navController: NavHostController
 ) {
-    // Collect the card data from the ViewModel
     val viewModel: MatchedCardFullScreenViewModel = hiltViewModel()
     val cardData by viewModel.cardData.collectAsState()
 
-
-    // Notification Logic
     val notificationPermissionState = rememberPermissionState(
         permission = Manifest.permission.POST_NOTIFICATIONS
     )
 
-    // Bottom Sheet
     var showBottomSheet by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState()
     var showBottomConfirmButton by remember { mutableStateOf(false) }
-
 
     LaunchedEffect(notificationPermissionState) {
         if (!notificationPermissionState.status.isGranted) {
@@ -99,31 +86,16 @@ fun MatchedCardFullScreen(
         }
     }
 
-    // Fetch the data when the composable is first launched
     LaunchedEffect(cardId) {
-        viewModel.fetchCardData(cardId) // Fetch the card data
+        viewModel.fetchCardData(cardId)
     }
 
-
-    // Display card data
     cardData?.let { data ->
-
-        val cardLabel = when (if (data["cardType"].toString().length == 1) {
-            data["cardType"].toString()
-        } else {
-            data["cardType"].toString().drop(1)
-        }) {
-            "0" -> "Lost"
-            "1" -> "Found"
-            else -> "Halted"
-        }
-
         Column(
             modifier = modifier
                 .fillMaxSize()
                 .padding(top = 16.dp, start = 2.dp, end = 4.dp)
         ) {
-            // Top bar with close icon and Lost Item button
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -142,33 +114,15 @@ fun MatchedCardFullScreen(
 
             Spacer(modifier = modifier.height(8.dp))
 
-
             Column(modifier = modifier.padding(horizontal = 16.dp)) {
-                // Title and location row
                 Column(modifier = modifier.fillMaxWidth()) {
-                    Row (
+                    Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.Center
-                    ){
+                    ) {
                         Text(
                             text = data["parentCategory"]?.toString() ?: "Unknown",
                             style = MaterialTheme.typography.headlineLarge
-                        )
-
-                        Spacer(modifier.width(8.dp))
-
-                        Icon(
-                            imageVector = Icons.Default.FiberManualRecord,
-                            contentDescription = "Close",
-                            modifier = Modifier
-                                .size(12.dp)
-                        )
-
-                        Spacer(modifier.width(8.dp))
-
-                        Text(
-                            text = data["color"]?.toString() ?: "Unknown Colour",
-                            style = MaterialTheme.typography.headlineMedium
                         )
                     }
 
@@ -185,7 +139,7 @@ fun MatchedCardFullScreen(
                                 .height(IntrinsicSize.Max),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.Center
-                        ){
+                        ) {
                             Icon(
                                 imageVector = Icons.Rounded.LocationOn,
                                 contentDescription = "Close",
@@ -193,10 +147,7 @@ fun MatchedCardFullScreen(
                             )
                             Spacer(modifier.width(4.dp))
                             Text(
-                                text = truncateText(
-                                    text = data["locationAddress"]?.toString() ?: "Unknown location",
-                                    maxLength = 26
-                                ),
+                                text = (data["locationAddress"]?.toString() ?: "Unknown location").take(26),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = Color.Gray,
                                 overflow = TextOverflow.Ellipsis,
@@ -215,39 +166,6 @@ fun MatchedCardFullScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Lazy grid for white boxes
-                LazyVerticalGrid(
-                    modifier = modifier
-                        .fillMaxWidth(),
-                    columns = GridCells.Adaptive(minSize = 120.dp)
-                ) {
-                    val input = data["childCategory"]?.toString()
-                    if (!input.isNullOrEmpty()) {
-                        val charList = input.split(",")
-                            .mapNotNull { it.trim().toIntOrNull() }
-                            .filter { id -> childCategories.any { it.id == id } }
-
-                        Log.d("CharList", "Contents of charList: $charList")
-
-                        val filteredCategories = childCategories.filter { category ->
-                            charList.contains(category.id)
-                        }
-
-                        if (filteredCategories.isNotEmpty()) {
-                            items(filteredCategories) { category ->
-                                CategoryCard(
-                                    modifier = modifier,
-                                    categoryText = category.name,
-                                    borderColor = Color.Black
-                                )
-                            }
-                        }
-                    }
-                }
-
-                Spacer(modifier = modifier.height(16.dp))
-
-                // Item description card
                 OutlinedCard(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -284,8 +202,7 @@ fun MatchedCardFullScreen(
 
                     ElevatedButton(
                         onClick = {
-                            if (notificationPermissionState.status.isGranted) {
-                            } else {
+                            if (!notificationPermissionState.status.isGranted) {
                                 notificationPermissionState.launchPermissionRequest()
                             }
 
@@ -324,11 +241,10 @@ fun MatchedCardFullScreen(
 
                                 // Name Row
                                 Row(
-                                    modifier.fillMaxWidth()
-                                    ,
+                                    modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.Start,
                                     verticalAlignment = Alignment.CenterVertically
-                                ){
+                                ) {
                                     Text(
                                         text = "Name:",
                                         fontSize = 16.sp,
@@ -349,11 +265,10 @@ fun MatchedCardFullScreen(
 
                                 // Country Row
                                 Row(
-                                    modifier.fillMaxWidth()
-                                    ,
+                                    modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.Start,
                                     verticalAlignment = Alignment.CenterVertically
-                                ){
+                                ) {
                                     Text(
                                         text = "Country:",
                                         fontSize = 16.sp,
@@ -374,11 +289,10 @@ fun MatchedCardFullScreen(
 
                                 // Email Row
                                 Row(
-                                    modifier.fillMaxWidth()
-                                    ,
+                                    modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.Start,
                                     verticalAlignment = Alignment.CenterVertically
-                                ){
+                                ) {
                                     Text(
                                         text = "Email:",
                                         fontSize = 16.sp,
@@ -469,8 +383,8 @@ fun MatchedCardFullScreen(
                                     Button(
                                         modifier = modifier.width(112.dp),
                                         onClick = {
-                                            viewModel.contactUser(cardId){isSuccessfull ->
-                                                if (isSuccessfull){
+                                            viewModel.contactUser(cardId) { isSuccessfull ->
+                                                if (isSuccessfull) {
                                                     showBottomConfirmButton = false
                                                     navController.popBackStack()
                                                 } else {
@@ -501,20 +415,13 @@ fun MatchedCardFullScreen(
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Composable
 @Preview(showBackground = true, showSystemUi = false)
 fun PreviewMatchedCardFullScreen() {
-    val cardItem: Map<String, Any> = mapOf(
-        "cardId" to 1,
-        "cardType" to 0,
-        "date" to "13-May-2024",
-        "category" to "Phone",
-        "location" to "Srinagar, Jammu & Kashmir",
-        "status" to 0
-    )
-    ProgressCardFullScreen(
+    MatchedCardFullScreen(
         modifier = Modifier,
-        cardId = cardItem["cardId"].toString(),
+        cardId = "1",
         navController = NavHostController(LocalContext.current)
     )
 }

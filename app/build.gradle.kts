@@ -16,6 +16,7 @@ android {
     namespace = "com.example.foundit"
     compileSdk = 35 // This is the version used to compile the app
 
+    // canhge build tyoe
     signingConfigs {
         create("sharedConfig") {
             keyAlias = "key0"

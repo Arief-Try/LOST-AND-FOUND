@@ -26,7 +26,7 @@ fun AppIcon(
     )
     {
         Image(
-            painter = painterResource(R.drawable.app_name_icon),
+            painter = painterResource( R.drawable.lost_found_icon),
             contentDescription = "App Logo",
             modifier = modifier
         )
