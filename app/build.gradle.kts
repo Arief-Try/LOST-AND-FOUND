@@ -1,10 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
-
-    // Add this line exactly like this:
     id("com.google.android.libraries.mapsplatform.secrets-gradle-plugin")
-
     alias(libs.plugins.google.gms.google.services)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.ksp)
@@ -14,17 +11,13 @@ plugins {
 
 android {
     namespace = "com.example.foundit"
-    compileSdk = 35 // This is the version used to compile the app
+    compileSdk = 35
 
-    // canhge build tyoe
     signingConfigs {
         create("sharedConfig") {
             keyAlias = "key0"
             keyPassword = "Musaibkey"
             storePassword = "Musaibkey"
-
-            // This is the portable way.
-            // "../" means "go up one folder from 'app', then look in 'signing'"
             storeFile = file("../signing/foundit_jks.jks")
         }
     }
@@ -32,7 +25,7 @@ android {
     defaultConfig {
         applicationId = "com.example.foundit"
         minSdk = 33
-        targetSdk = 35  // <--- CHANGE THIS FROM 34 TO 35
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0.0"
 
@@ -41,41 +34,18 @@ android {
             useSupportLibrary = true
         }
 
-        buildConfigField(
-            "String",
-            "SUPABASE_URL",
-            "\"${project.findProperty("SUPABASE_URL") ?: ""}\""
-        )
-
-        buildConfigField(
-            "String",
-            "SUPABASE_ANON_KEY",
-            "\"${project.findProperty("SUPABASE_ANON_KEY") ?: ""}\""
-        )
-
-        buildConfigField(
-            "String",
-            "WEB_CLIENT_ID",
-            "\"${project.findProperty("WEB_CLIENT_ID") ?: ""}\""
-        )
-
+        buildConfigField("String", "SUPABASE_URL", "\"${project.findProperty("SUPABASE_URL") ?: ""}\"")
+        buildConfigField("String", "SUPABASE_ANON_KEY", "\"${project.findProperty("SUPABASE_ANON_KEY") ?: ""}\"")
+        buildConfigField("String", "WEB_CLIENT_ID", "\"${project.findProperty("WEB_CLIENT_ID") ?: ""}\"")
     }
 
     buildTypes {
         release {
-            // 1. ADD THIS LINE: Links the shared key to your release build
             signingConfig = signingConfigs.getByName("sharedConfig")
-
             isMinifyEnabled = false
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
-
         debug {
-            // 2. ADD THIS ENTIRE BLOCK: This is the most important part for fixing Error 10
-            // It forces the "testing" version of the app to use your team's shared key.
             signingConfig = signingConfigs.getByName("sharedConfig")
         }
     }
@@ -90,7 +60,7 @@ android {
 
     buildFeatures {
         compose = true
-        buildConfig = true // Add this line here
+        buildConfig = true
     }
 
     packaging {
@@ -99,11 +69,10 @@ android {
         }
     }
     buildToolsVersion = "35.0.0"
-
-
 }
 
 dependencies {
+    // --- Android & Compose Basics ---
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -113,52 +82,42 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
     implementation(libs.androidx.material.icons.extended)
-
-    //Play Feature Delivery
-    implementation(libs.feature.delivery)
-
-    //Room
     implementation(libs.androidx.foundation.layout.android)
     implementation(libs.androidx.appcompat)
 
-    //Hilt
+    // --- Navigation & Hilt ---
+    implementation(libs.androidx.navigation.compose)
+    implementation(libs.androidx.hilt.navigation.compose)
     implementation(libs.hilt.android)
     ksp(libs.hilt.android.compiler)
-    implementation (libs.androidx.hilt.navigation.compose)
 
+    // --- Supabase (Unified via BOM 3.1.0) ---
+    implementation(platform("io.github.jan-tennert.supabase:bom:3.1.0"))
+    implementation("io.github.jan-tennert.supabase:auth-kt")
+    implementation("io.github.jan-tennert.supabase:postgrest-kt")
+    implementation("io.github.jan-tennert.supabase:storage-kt")
 
-    //Coil
+    // --- Ktor (Required by Supabase) ---
+    implementation("io.ktor:ktor-client-android:3.0.1")
+
+    // --- JSON & Networking ---
+    implementation(libs.kotlinx.serialization.json)
+    implementation(libs.okhttp)
+
+    // --- Image Loading ---
     implementation(libs.coil.compose)
 
-    //navigation
-    implementation(libs.androidx.navigation.fragment.ktx)
-    implementation(libs.androidx.navigation.ui.ktx)
-    implementation(libs.androidx.navigation.compose)
-
-    // Feature module Support
-    implementation(libs.androidx.navigation.dynamic.features.fragment)
-
-    // Jetpack Compose Integration
-    implementation(libs.androidx.navigation.compose)
-
-    //Coroutines
-    implementation(libs.kotlinx.coroutines.android)
-
-    // Firebase
+    // --- Firebase ---
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.auth)
-    implementation(libs.firebase.auth.ktx)
-    implementation(libs.firebase.config.ktx)
     implementation(libs.firebase.firestore.ktx)
 
-
-    //Authentication with Credential Manager
+    // --- Google Auth ---
     implementation(libs.androidx.credentials.play.services.auth)
-    implementation(libs.play.services.auth)  // Android 13 or below
     implementation(libs.googleid)
     implementation(libs.play.services.auth)
 
-    //Google Maps
+    // --- Google Maps & Location ---
     implementation(libs.play.services.maps)
     implementation(libs.maps.compose)
     implementation(libs.maps.compose.utils)
@@ -166,39 +125,14 @@ dependencies {
     implementation(libs.maps.ktx)
     implementation(libs.maps.utils.ktx)
     implementation(libs.play.services.location)
-
-    //Permissions Accompanist
     implementation(libs.accompanist.permissions)
 
-    // For making HTTP requests (OkHttp)
-    implementation (libs.okhttp)
-
-    // For parsing JSON (Gson or kotlinx.serialization)
-    implementation (libs.kotlinx.serialization.json)
-
-
-
+    // --- Testing ---
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.ui.test.junit4)
-
-    //Testing Navigation
-    androidTestImplementation(libs.androidx.navigation.testing)
-
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
-
-    // Supabase
-    implementation(platform("io.github.jan-tennert.supabase:bom:3.1.0"))
-    implementation("io.github.jan-tennert.supabase:auth-kt")
-    implementation("io.github.jan-tennert.supabase:postgrest-kt")
-
-// Ktor
-    implementation("io.ktor:ktor-client-android:3.0.1")
-
-
-
-
 }
