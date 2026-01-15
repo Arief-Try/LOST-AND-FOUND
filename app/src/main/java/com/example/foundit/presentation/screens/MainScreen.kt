@@ -14,6 +14,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -33,7 +34,8 @@ import com.example.foundit.presentation.screens.notification.NotificationScreen
 import com.example.foundit.presentation.screens.profile.ProfileScreen
 import com.example.foundit.presentation.screens.profile.ProfileViewModel
 import com.example.foundit.presentation.screens.profile.components.EditProfileScreen
-import com.example.foundit.presentation.screens.progress.ProcessScreen
+import com.example.foundit.presentation.screens.progress.ItemDetailsScreen
+import com.example.foundit.presentation.screens.progress.ItemListScreen
 import com.example.foundit.presentation.screens.progress.components.MatchedCardFullScreen
 import com.example.foundit.presentation.screens.progress.components.ProgressCardFullScreen
 import com.example.foundit.presentation.screens.registration.ForgotPasswordScreen
@@ -64,8 +66,8 @@ import com.example.foundit.presentation.splash.SplashScreen
 
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Composable
-fun MainScreen(modifier: Modifier) {
-    val navController = rememberNavController()
+fun MainScreen(modifier: Modifier = Modifier) {
+    val navController: NavHostController = rememberNavController()
     val currentNavRoute = currentRoute(navController)
     val context = LocalContext.current
 
@@ -91,7 +93,6 @@ fun MainScreen(modifier: Modifier) {
                             popUpTo(NavRoutes.LOGIN) { inclusive = true }
                         }
                     } else {
-                        // This toast appears if Supabase rejects the token
                         Toast.makeText(context, "Supabase Handshake Failed. Check Logcat for AUTH_ERROR.", Toast.LENGTH_LONG).show()
                     }
                 }
@@ -114,10 +115,9 @@ fun MainScreen(modifier: Modifier) {
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = NavRoutes.SPLASH, // Start here
+            startDestination = NavRoutes.SPLASH,
             modifier = modifier.padding(innerPadding)
         ) {
-            // FIX: Adding the missing Splash route
             composable(NavRoutes.SPLASH) {
                 SplashScreen(
                     navController = navController,
@@ -125,9 +125,7 @@ fun MainScreen(modifier: Modifier) {
                 )
             }
 
-            // Find this block in MainScreen_kt.txt
             composable(NavRoutes.GET_STARTED) {
-                // REMOVE 'forwardNavigation = NavRoutes.SIGN_UP'
                 GetStartedScreen(
                     modifier = modifier,
                     navController = navController
@@ -174,8 +172,7 @@ fun MainScreen(modifier: Modifier) {
             composable(
                 route = NavRoutes.USER_ITEM_INPUT_SCREEN + "/{cardType}",
                 arguments = listOf(navArgument("cardType") { type = NavType.IntType })
-            ) { //backStackEntry ->
-                //val cardType = backStackEntry.arguments?.getInt("cardType")
+            ) { 
                 UserItemInputScreen(
                     modifier = modifier,
                     navController = navController
@@ -183,7 +180,15 @@ fun MainScreen(modifier: Modifier) {
             }
 
             composable(NavRoutes.PROGRESS) {
-                ProcessScreen(modifier, navController)
+                ItemListScreen(navController = navController)
+            }
+
+            composable(
+                NavRoutes.ITEM_DETAILS + "/{itemId}",
+                arguments = listOf(navArgument("itemId") { type = NavType.StringType })
+            ) {
+                val itemId = it.arguments?.getString("itemId")
+                ItemDetailsScreen(itemId = itemId.toString())
             }
 
             composable(
@@ -287,37 +292,6 @@ fun MainScreen(modifier: Modifier) {
                 ChangePhoneNumberScreen(modifier = modifier, navController = navController)
             }
 
-            composable(NavRoutes.LOGIN) {
-                LoginScreen(
-                    modifier = modifier,
-                    navController = navController,
-                    loginViewModel = loginViewModel,
-                    // Pass the launcher and the intent here
-                    onGoogleSignInClick = {
-                        googleLauncher.launch(authViewModel.getSignInIntent())
-                    }
-                )
-            }
-
-            composable(NavRoutes.SIGN_UP) {
-                SignUpScreen(
-                    modifier = modifier,
-                    navController = navController,
-                    signUpViewModel = signUpViewModel,
-                    onGoogleSignInClick = {
-                        googleLauncher.launch(authViewModel.getSignInIntent())
-                    }
-                )
-            }
-
-            composable(NavRoutes.GET_STARTED) {
-                // REMOVE 'forwardNavigation = NavRoutes.SIGN_UP'
-                GetStartedScreen(
-                    modifier = modifier,
-                    navController = navController
-                )
-            }
-
             composable(NavRoutes.FORGOT_PASSWORD) {
                 ForgotPasswordScreen(modifier = modifier, navController = navController)
             }
@@ -345,8 +319,3 @@ fun shouldShowBottomBar(currentRoute: String?): Boolean {
         else -> false
     }
 }
-
-
-
-
-

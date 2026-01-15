@@ -3,9 +3,9 @@ package com.example.foundit.presentation.screens.progress
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.foundit.presentation.data.firestore.FirestoreService
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.delay
+import io.github.jan.supabase.SupabaseClient
+import io.github.jan.supabase.postgrest.postgrest
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -14,63 +14,56 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ProgressViewModel @Inject constructor(
-    private val firestoreService: FirestoreService
+    private val supabase: SupabaseClient
 ) : ViewModel() {
 
-    private val _haltedItems = MutableStateFlow<List<Map<String, Any>>>(emptyList())
-    val haltedItems: StateFlow<List<Map<String, Any>>> = _haltedItems.asStateFlow()
+    // Using Map<String, Any> because there is no Item.kt data class
+    private val _lostItems = MutableStateFlow<List<Map<String, Any>>>(emptyList())
+    val lostItems: StateFlow<List<Map<String, Any>>> = _lostItems.asStateFlow()
 
-    private val _inProcessItems = MutableStateFlow<List<Map<String, Any>>>(emptyList())
-    val inProcessItems: StateFlow<List<Map<String, Any>>> = _inProcessItems.asStateFlow()
+    private val _foundItems = MutableStateFlow<List<Map<String, Any>>>(emptyList())
+    val foundItems: StateFlow<List<Map<String, Any>>> = _foundItems.asStateFlow()
 
-    private val _finishedItems = MutableStateFlow<List<Map<String, Any>>>(emptyList())
-    val finishedItems: StateFlow<List<Map<String, Any>>> = _finishedItems.asStateFlow()
+    private val _myReportItems = MutableStateFlow<List<Map<String, Any>>>(emptyList())
+    val myReportItems: StateFlow<List<Map<String, Any>>> = _myReportItems.asStateFlow()
 
     init {
         fetchData()
-        Log.d("progress", "init called")
     }
 
-    private fun fetchData() {
+    fun fetchData() {
         viewModelScope.launch {
-            // Wait until the current user ID is available
-            while (firestoreService.currentUserId.isEmpty()) {
-                delay(100)
-            }
+            try {
+                // 1. Fetch all raw data from Supabase
+                val response = supabase.postgrest.from("items")
+                    .select()
+                    .decodeList<Map<String, Any>>()
 
-            firestoreService.getCardData().collect { items ->
-                // Log the raw items fetched from Firestore
-                Log.d("progress", "Raw items: $items")
+               // val response = supabase.postgrest.from("items").select().decodeList<Map<String, Any>>()
+                Log.d("SUPABASE_CHECK", "Items fetched: ${response.size}")
+                if (response.isEmpty()) {
+                    Log.d("SUPABASE_CHECK", "The list is empty. Check RLS Policies or Table Name.")
+                }
+                Log.d("SupabaseDebug", "Raw Response Size: ${response.size}")
+                Log.d("SupabaseDebug", "Raw Data: $response")
 
-                // Sort by phone (replace "phone" with the actual field name if necessary)
-                val sortedItems = items//.sortedBy { it["date"]?.toString() }
+                // 2. Filter for lowercase "lost"
+                _lostItems.value = response.filter {
+                    (it["item_type"] as? String)?.lowercase() == "lost"
+                }
 
-                // Log the sorted items
-                Log.d("progress", "Sorted items: $sortedItems")
+                // 3. Filter for lowercase "found"
+                _foundItems.value = response.filter {
+                    (it["item_type"] as? String)?.lowercase() == "found"
+                }
 
-                // Filter based on status (-1 = halted, 0 = in-process, 1 = finished)
-                val halted = sortedItems.filter { (it["status"] as? Long) == -1L }
-                val inProcess = sortedItems.filter { (it["status"] as? Long) == 0L }
-                val finished = sortedItems.filter { (it["status"] as? Long) == 1L }
+                // 4. My Reports: Showing all for testing since login is bypassed
+                _myReportItems.value = response
 
-                // Update StateFlow values
-                _haltedItems.value = halted
-                _inProcessItems.value = inProcess
-                _finishedItems.value = finished
-
-                // Log the final lists
-                Log.d("progress", "Halted items: $halted")
-                Log.d("progress", "In-process items: $inProcess")
-                Log.d("progress", "Finished items: $finished")
+                Log.d("SupabaseSuccess", "Loaded ${response.size} items")
+            } catch (e: Exception) {
+                Log.e("SupabaseError", "Fetch failed: ${e.message}")
             }
         }
     }
-
-    /*
-    override fun onCleared() {
-        super.onCleared()
-        Log.d("Progress", "ViewModel destroyed")
-    }
-    
-     */
 }

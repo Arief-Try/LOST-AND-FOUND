@@ -35,7 +35,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.foundit.R
-import com.example.foundit.presentation.data.navigation.NavRoutes
 
 @Composable
 fun MainCard(
@@ -67,7 +66,7 @@ fun MainCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
-                    painter = painterResource(id = R.drawable.baseline_category_24),
+                    painter = painterResource(id = R.drawable.lf_icon),
                     contentDescription = "Category Icon",
                     tint = Color.White,
                     modifier = modifier
@@ -149,6 +148,6 @@ fun PreviewMainCard() {
         cardTitle = R.string.lost_card_sub_title,
         cardColor = Color.Red,
         navController = NavHostController(LocalContext.current),
-        forwardNavigation = NavRoutes.ACTION_SCREEN
+        forwardNavigation = ""
     )
 }

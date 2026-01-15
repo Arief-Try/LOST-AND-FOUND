@@ -22,7 +22,7 @@ import com.example.foundit.presentation.data.navigation.NavRoutes
 import com.example.foundit.presentation.screens.progress.components.ItemCard
 
 @Composable
-fun ProgressScreen(
+fun ItemListScreen(
     navController: NavController,
     viewModel: ProgressViewModel = hiltViewModel()
 ) {
@@ -45,18 +45,25 @@ fun ProgressScreen(
         }
 
         LazyColumn(modifier = Modifier.padding(8.dp)) {
-            val items = when (selectedTabIndex) {
+            // Determine which list to display based on the selected tab
+            val currentList = when (selectedTabIndex) {
                 0 -> lostItems
                 1 -> foundItems
                 else -> myReportItems
             }
-            items(items) { item ->
+
+            items(currentList) { item ->
+                // Extracting values from the Map safely
+                val rawDate = item["created_at"] as? String ?: ""
+
                 ItemCard(
                     imageUrl = item["image_url"] as? String ?: "",
-                    location = item["location"] as? String ?: "",
-                    date = item["created_at"] as? String ?: "",
+                    location = item["location"] as? String ?: "No location",
+                    date = rawDate.substringBefore("T"), // Simplifies the Supabase timestamp
                     onItemClick = {
-                        navController.navigate(NavRoutes.ITEM_DETAILS + "/${item["id"]}")
+                        // Pass the ID to the details screen
+                        val itemId = item["id"].toString()
+                        navController.navigate(NavRoutes.ITEM_DETAILS + "/$itemId")
                     }
                 )
             }

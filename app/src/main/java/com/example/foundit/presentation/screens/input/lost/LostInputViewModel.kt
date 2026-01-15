@@ -17,6 +17,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.auth
+import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.storage.storage
 import java.time.LocalDate
@@ -97,23 +98,25 @@ class LostInputViewModel @Inject constructor(
     fun insertItem(itemType: String) {
         viewModelScope.launch {
             _isLoading.value = true
-            try {
-                val user = supabase.auth.currentUserOrNull()
-                val user_id = user?.id ?: throw Exception("User not logged in")
+            var uploadedFileName: String? = null // Keep track for cleanup
 
-                var uploadedImageUrl: String? = null
+            try {
+                val user = supabase.auth.currentUserOrNull() ?: throw Exception("User not logged in")
+                val userId = user.id
 
                 // 1. Image Upload
-                selectedImageBytes?.let { bytes ->
+                val uploadedImageUrl = selectedImageBytes?.let { bytes ->
                     val fileName = "item_${System.currentTimeMillis()}.jpg"
+                    uploadedFileName = fileName
+
                     val bucket = supabase.storage.from("item-images")
                     bucket.upload(fileName, bytes)
-                    uploadedImageUrl = bucket.publicUrl(fileName)
+                    bucket.publicUrl(fileName)
                 }
 
                 // 2. Data Insertion
                 val newItem = Item(
-                    user_id = user_id,
+                    user_id = userId,
                     item_type = itemType,
                     description = _itemDescription.value,
                     category = _selectedCategory.value,
@@ -122,13 +125,19 @@ class LostInputViewModel @Inject constructor(
                     image_url = uploadedImageUrl
                 )
 
-                supabase.postgrest["items"].insert(newItem)
-                _isSuccess.value = true
-                Log.d("Supabase", "Success: Item added to database")
+                supabase.from("items").insert(newItem)
 
+                _isSuccess.value = true
             } catch (e: Exception) {
+                // OPTIONAL: Cleanup orphaned image if DB insert fails
+                uploadedFileName?.let { fileName ->
+                    launch { // Run in background
+                        try { supabase.storage.from("item-images").delete(fileName) } catch(ignore: Exception) {}
+                    }
+                }
+
                 _isSuccess.value = false
-                Log.e("SupabaseError", "Insert failed: ${e.message}")
+                Log.e("SupabaseError", "Operation failed", e)
             } finally {
                 _isLoading.value = false
             }
