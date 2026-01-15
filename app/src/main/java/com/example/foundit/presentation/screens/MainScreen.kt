@@ -115,7 +115,7 @@ fun MainScreen(modifier: Modifier = Modifier) {
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = NavRoutes.SPLASH,
+            startDestination = NavRoutes.HOME,
             modifier = modifier.padding(innerPadding)
         ) {
             composable(NavRoutes.SPLASH) {

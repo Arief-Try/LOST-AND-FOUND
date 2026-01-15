@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.jan.supabase.SupabaseClient
+import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.postgrest.postgrest
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -17,7 +18,6 @@ class ProgressViewModel @Inject constructor(
     private val supabase: SupabaseClient
 ) : ViewModel() {
 
-    // Using Map<String, Any> because there is no Item.kt data class
     private val _lostItems = MutableStateFlow<List<Map<String, Any>>>(emptyList())
     val lostItems: StateFlow<List<Map<String, Any>>> = _lostItems.asStateFlow()
 
@@ -27,42 +27,39 @@ class ProgressViewModel @Inject constructor(
     private val _myReportItems = MutableStateFlow<List<Map<String, Any>>>(emptyList())
     val myReportItems: StateFlow<List<Map<String, Any>>> = _myReportItems.asStateFlow()
 
+    private val _searchQuery = MutableStateFlow("")
+    val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
+
     init {
+        Log.d("Diagnosis", "ProgressViewModel initialized. Fetching data...")
         fetchData()
     }
 
-    fun fetchData() {
+    fun onSearchQueryChange(query: String) {
+        _searchQuery.value = query
+    }
+
+    private fun fetchData() {
         viewModelScope.launch {
             try {
-                // 1. Fetch all raw data from Supabase
-                val response = supabase.postgrest.from("items")
-                    .select()
-                    .decodeList<Map<String, Any>>()
+                val userId = supabase.auth.currentUserOrNull()?.id
+                Log.d("Diagnosis", "Fetching items from Supabase...")
+                val response = supabase.postgrest.from("items").select().decodeList<Map<String, Any>>()
+                Log.d("Diagnosis", "Supabase response received. ${response.size} items found.")
 
-               // val response = supabase.postgrest.from("items").select().decodeList<Map<String, Any>>()
-                Log.d("SUPABASE_CHECK", "Items fetched: ${response.size}")
-                if (response.isEmpty()) {
-                    Log.d("SUPABASE_CHECK", "The list is empty. Check RLS Policies or Table Name.")
-                }
-                Log.d("SupabaseDebug", "Raw Response Size: ${response.size}")
-                Log.d("SupabaseDebug", "Raw Data: $response")
+                _lostItems.value = response.filter { it["item_type"] == "LOST" }
+                _foundItems.value = response.filter { it["item_type"] == "FOUND" }
+                Log.d("Diagnosis", "Filtering complete. Lost: ${_lostItems.value.size}, Found: ${_foundItems.value.size}")
 
-                // 2. Filter for lowercase "lost"
-                _lostItems.value = response.filter {
-                    (it["item_type"] as? String)?.lowercase() == "lost"
+                if (userId != null) {
+                    _myReportItems.value = response.filter { it["user_id"] == userId }
+                    Log.d("Diagnosis", "My Reports filtering complete. Found: ${_myReportItems.value.size}")
+                } else {
+                    Log.w("Diagnosis", "User ID is null. Cannot filter 'My Reports'.")
                 }
 
-                // 3. Filter for lowercase "found"
-                _foundItems.value = response.filter {
-                    (it["item_type"] as? String)?.lowercase() == "found"
-                }
-
-                // 4. My Reports: Showing all for testing since login is bypassed
-                _myReportItems.value = response
-
-                Log.d("SupabaseSuccess", "Loaded ${response.size} items")
             } catch (e: Exception) {
-                Log.e("SupabaseError", "Fetch failed: ${e.message}")
+                Log.e("Diagnosis", "An error occurred while fetching data: ${e.message}", e)
             }
         }
     }
