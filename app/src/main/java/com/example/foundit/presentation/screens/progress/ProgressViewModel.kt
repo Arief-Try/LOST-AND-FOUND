@@ -1,6 +1,5 @@
 package com.example.foundit.presentation.screens.progress
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.foundit.data.models.Item
@@ -8,12 +7,12 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.postgrest.postgrest
+import io.github.jan.supabase.postgrest.query.Order
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-
 
 sealed class ItemUiState {
     object Loading : ItemUiState()
@@ -33,28 +32,44 @@ class ProgressViewModel @Inject constructor(
     private val _uiState = MutableStateFlow<ItemUiState>(ItemUiState.Loading)
     val uiState: StateFlow<ItemUiState> = _uiState.asStateFlow()
 
+    private var allItems = mutableListOf<Item>()
+    private var currentOffset = 0L
+    private val pageSize = 5L // Strictly limited to 5 per page
+
     init {
-        fetchItems()
+        fetchItems(isRefresh = true)
     }
 
-    fun fetchItems() {
+    fun fetchItems(isRefresh: Boolean = false) {
         viewModelScope.launch {
-            _uiState.value = ItemUiState.Loading
+            if (isRefresh) {
+                _uiState.value = ItemUiState.Loading
+                currentOffset = 0L
+                allItems.clear()
+            }
+
             try {
                 val userId = supabase.auth.currentUserOrNull()?.id
-                val items = supabase.postgrest.from("items").select().decodeList<Item>().sortedByDescending { it.created_at }
-                Log.d("ProgressViewModel", "Successfully fetched ${items.size} items.")
 
-                val lostItems = items.filter { it.item_type.equals("lost", ignoreCase = true) }
-                val foundItems = items.filter { it.item_type.equals("found", ignoreCase = true) }
-                val myReportItems = if (userId != null) items.filter { it.user_id == userId } else emptyList()
+                // Fetch from Supabase with Order and Range
+                val newItems = supabase.postgrest.from("items")
+                    .select {
+                        order("created_at", order = Order.DESCENDING)
+                        range(currentOffset, currentOffset + pageSize - 1)
+                    }
+                    .decodeList<Item>()
 
-                Log.d("ProgressViewModel", "Filtered items. Lost: ${lostItems.size}, Found: ${foundItems.size}, My Reports: ${myReportItems.size}")
+                allItems.addAll(newItems)
+                currentOffset += pageSize
+
+                // Filter lists for the tabs
+                val lostItems = allItems.filter { it.item_type.equals("lost", ignoreCase = true) }
+                val foundItems = allItems.filter { it.item_type.equals("found", ignoreCase = true) }
+                val myReportItems = if (userId != null) allItems.filter { it.user_id == userId } else emptyList()
 
                 _uiState.value = ItemUiState.Success(lostItems, foundItems, myReportItems)
 
             } catch (e: Exception) {
-                Log.e("ProgressViewModel", "Error fetching items", e)
                 _uiState.value = ItemUiState.Error("Failed to load items: ${e.message}")
             }
         }
