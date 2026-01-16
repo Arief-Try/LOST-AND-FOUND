@@ -41,7 +41,6 @@ import com.example.foundit.presentation.screens.progress.components.ProgressCard
 import com.example.foundit.presentation.screens.registration.ForgotPasswordScreen
 import com.example.foundit.presentation.screens.registration.GetStartedScreen
 import com.example.foundit.presentation.screens.registration.login.LoginScreen
-import com.example.foundit.presentation.screens.registration.login.LoginViewModel
 import com.example.foundit.presentation.screens.registration.signup.SignUpScreen
 import com.example.foundit.presentation.screens.registration.signup.SignUpViewModel
 import com.example.foundit.presentation.screens.settings.SettingsScreen
@@ -72,7 +71,6 @@ fun MainScreen(modifier: Modifier = Modifier) {
     val context = LocalContext.current
 
     val authViewModel: AuthViewModel = hiltViewModel()
-    val loginViewModel: LoginViewModel = hiltViewModel()
     val signUpViewModel: SignUpViewModel = hiltViewModel()
     val profileViewModel: ProfileViewModel = hiltViewModel()
     val notificationBaseViewModel: NotificationBaseViewModel = hiltViewModel()
@@ -136,7 +134,6 @@ fun MainScreen(modifier: Modifier = Modifier) {
                 LoginScreen(
                     modifier = modifier,
                     navController = navController,
-                    loginViewModel = loginViewModel,
                     onGoogleSignInClick = {
                         try {
                             googleLauncher.launch(authViewModel.getSignInIntent())
