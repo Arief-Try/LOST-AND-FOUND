@@ -115,7 +115,7 @@ fun MainScreen(modifier: Modifier = Modifier) {
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = NavRoutes.HOME, 
+            startDestination = NavRoutes.SPLASH,
             modifier = modifier.padding(innerPadding)
         ) {
             composable(NavRoutes.SPLASH) {
@@ -188,7 +188,7 @@ fun MainScreen(modifier: Modifier = Modifier) {
                 arguments = listOf(navArgument("itemId") { type = NavType.StringType })
             ) {
                 val itemId = it.arguments?.getString("itemId")
-                ItemDetailsScreen(itemId = itemId.toString())
+                ItemDetailsScreen(itemId = itemId.toString(), navController = navController)
             }
 
             composable(

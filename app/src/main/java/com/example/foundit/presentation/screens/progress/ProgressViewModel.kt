@@ -9,6 +9,7 @@ import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.postgrest.postgrest
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -16,7 +17,11 @@ import javax.inject.Inject
 
 sealed class ItemUiState {
     object Loading : ItemUiState()
-    data class Success(val items: List<Item>) : ItemUiState()
+    data class Success(
+        val lostItems: List<Item>,
+        val foundItems: List<Item>,
+        val myReportItems: List<Item>
+    ) : ItemUiState()
     data class Error(val message: String) : ItemUiState()
 }
 
@@ -26,7 +31,7 @@ class ProgressViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<ItemUiState>(ItemUiState.Loading)
-    val uiState = _uiState.asStateFlow()
+    val uiState: StateFlow<ItemUiState> = _uiState.asStateFlow()
 
     init {
         fetchItems()
@@ -36,9 +41,18 @@ class ProgressViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = ItemUiState.Loading
             try {
-                val items = supabase.postgrest.from("items").select().decodeList<Item>()
+                val userId = supabase.auth.currentUserOrNull()?.id
+                val items = supabase.postgrest.from("items").select().decodeList<Item>().sortedByDescending { it.created_at }
                 Log.d("ProgressViewModel", "Successfully fetched ${items.size} items.")
-                _uiState.value = ItemUiState.Success(items)
+
+                val lostItems = items.filter { it.item_type.equals("lost", ignoreCase = true) }
+                val foundItems = items.filter { it.item_type.equals("found", ignoreCase = true) }
+                val myReportItems = if (userId != null) items.filter { it.user_id == userId } else emptyList()
+
+                Log.d("ProgressViewModel", "Filtered items. Lost: ${lostItems.size}, Found: ${foundItems.size}, My Reports: ${myReportItems.size}")
+
+                _uiState.value = ItemUiState.Success(lostItems, foundItems, myReportItems)
+
             } catch (e: Exception) {
                 Log.e("ProgressViewModel", "Error fetching items", e)
                 _uiState.value = ItemUiState.Error("Failed to load items: ${e.message}")

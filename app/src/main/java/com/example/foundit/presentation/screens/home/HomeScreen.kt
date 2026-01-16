@@ -63,10 +63,10 @@ fun HomeScreenContent(
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold
                 )
-                Greetings(
+              /*  Greetings(
                     greetingPrefix = greetingPrefix,
                     profileName = profileName
-                )
+                )*/
             }
             HorizontalDivider(
                 thickness = 1.dp,

@@ -1,10 +1,21 @@
 package com.example.foundit.presentation.screens.progress
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -12,6 +23,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.example.foundit.data.models.Item
 import com.example.foundit.presentation.data.navigation.NavRoutes
 import com.example.foundit.presentation.screens.progress.components.ItemCard
 
@@ -47,18 +59,10 @@ fun ProgressScreen(
                 }
             }
             is ItemUiState.Success -> {
-                val currentList = remember(selectedTabIndex, state.items) {
-                    val (lost, found, myReports) = state.items.partition { (it.item_type).equals("lost", ignoreCase = true) }
-                        .let { (lost, remaining) ->
-                            val (found, myReports) = remaining.partition { (it.item_type).equals("found", ignoreCase = true) }
-                            Triple(lost, found, myReports)
-                        }
-
-                    when (selectedTabIndex) {
-                        0 -> lost
-                        1 -> found
-                        else -> myReports
-                    }
+                val currentList = when (selectedTabIndex) {
+                    0 -> state.lostItems
+                    1 -> state.foundItems
+                    else -> state.myReportItems
                 }
 
                 if (currentList.isEmpty()) {
@@ -66,7 +70,10 @@ fun ProgressScreen(
                         Text("No items found.", color = Color.Gray)
                     }
                 } else {
-                    LazyColumn(modifier = Modifier.padding(8.dp)) {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(8.dp)
+                    ) {
                         items(currentList) { item ->
                             ItemCard(
                                 imageUrl = item.image_url ?: "",
