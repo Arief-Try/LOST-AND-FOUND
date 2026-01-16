@@ -35,7 +35,7 @@ import com.example.foundit.presentation.screens.profile.ProfileScreen
 import com.example.foundit.presentation.screens.profile.ProfileViewModel
 import com.example.foundit.presentation.screens.profile.components.EditProfileScreen
 import com.example.foundit.presentation.screens.progress.ItemDetailsScreen
-import com.example.foundit.presentation.screens.progress.ItemListScreen
+import com.example.foundit.presentation.screens.progress.ProgressScreen
 import com.example.foundit.presentation.screens.progress.components.MatchedCardFullScreen
 import com.example.foundit.presentation.screens.progress.components.ProgressCardFullScreen
 import com.example.foundit.presentation.screens.registration.ForgotPasswordScreen
@@ -115,7 +115,7 @@ fun MainScreen(modifier: Modifier = Modifier) {
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = NavRoutes.HOME,
+            startDestination = NavRoutes.HOME, 
             modifier = modifier.padding(innerPadding)
         ) {
             composable(NavRoutes.SPLASH) {
@@ -180,7 +180,7 @@ fun MainScreen(modifier: Modifier = Modifier) {
             }
 
             composable(NavRoutes.PROGRESS) {
-                ItemListScreen(navController = navController)
+                ProgressScreen(navController = navController)
             }
 
             composable(

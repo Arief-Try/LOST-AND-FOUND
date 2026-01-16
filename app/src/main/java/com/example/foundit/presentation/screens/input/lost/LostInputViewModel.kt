@@ -9,19 +9,18 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.foundit.data.models.Item
 import dagger.hilt.android.lifecycle.HiltViewModel
+import io.github.jan.supabase.SupabaseClient
+import io.github.jan.supabase.auth.auth
+import io.github.jan.supabase.postgrest.postgrest
+import io.github.jan.supabase.storage.storage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import javax.inject.Inject
-import io.github.jan.supabase.SupabaseClient
-import io.github.jan.supabase.auth.auth
-import io.github.jan.supabase.postgrest.from
-import io.github.jan.supabase.postgrest.postgrest
-import io.github.jan.supabase.storage.storage
 import java.time.LocalDate
 import java.time.ZoneId
+import javax.inject.Inject
 
 @HiltViewModel
 class LostInputViewModel @Inject constructor(
@@ -69,9 +68,6 @@ class LostInputViewModel @Inject constructor(
     fun updateLocation(newLocation: String) { _location.value = newLocation }
     fun updateItemDescription(newDescription: String) { _itemDescription.value = newDescription }
 
-    /**
-     * Updated with Dispatchers.IO to prevent UI Lag (ANR)
-     */
     fun onImageSelected(uri: Uri?, context: Context) {
         _selectedImageUri.value = uri
         uri?.let {
@@ -92,29 +88,22 @@ class LostInputViewModel @Inject constructor(
         _selectedDateMillis.value = date.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
     }
 
-    /**
-     * Sends the data to Supabase
-     */
     fun insertItem(itemType: String) {
         viewModelScope.launch {
             _isLoading.value = true
-            var uploadedFileName: String? = null // Keep track for cleanup
-
             try {
-                val user = supabase.auth.currentUserOrNull() ?: throw Exception("User not logged in")
-                val userId = user.id
+                val user = supabase.auth.currentUserOrNull()
+                val userId = user?.id ?: throw Exception("User not logged in")
 
-                // 1. Image Upload
-                val uploadedImageUrl = selectedImageBytes?.let { bytes ->
+                var uploadedImageUrl: String? = null
+
+                selectedImageBytes?.let { bytes ->
                     val fileName = "item_${System.currentTimeMillis()}.jpg"
-                    uploadedFileName = fileName
-
                     val bucket = supabase.storage.from("item-images")
                     bucket.upload(fileName, bytes)
-                    bucket.publicUrl(fileName)
+                    uploadedImageUrl = bucket.publicUrl(fileName)
                 }
 
-                // 2. Data Insertion
                 val newItem = Item(
                     user_id = userId,
                     item_type = itemType,
@@ -125,19 +114,13 @@ class LostInputViewModel @Inject constructor(
                     image_url = uploadedImageUrl
                 )
 
-                supabase.from("items").insert(newItem)
-
+                supabase.postgrest["items"].insert(newItem)
                 _isSuccess.value = true
-            } catch (e: Exception) {
-                // OPTIONAL: Cleanup orphaned image if DB insert fails
-                uploadedFileName?.let { fileName ->
-                    launch { // Run in background
-                        try { supabase.storage.from("item-images").delete(fileName) } catch(ignore: Exception) {}
-                    }
-                }
+                Log.d("Supabase", "Success: Item added to database")
 
+            } catch (e: Exception) {
                 _isSuccess.value = false
-                Log.e("SupabaseError", "Operation failed", e)
+                Log.e("SupabaseError", "Insert failed: ${e.message}")
             } finally {
                 _isLoading.value = false
             }
