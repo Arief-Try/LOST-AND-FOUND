@@ -11,10 +11,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.DateRange
-import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material.icons.filled.Phone
-import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -82,7 +79,6 @@ fun ItemDetailsScreen(
                             .verticalScroll(rememberScrollState())
                             .padding(16.dp)
                     ) {
-                        // Image Card
                         Card(
                             shape = RoundedCornerShape(28.dp),
                             modifier = Modifier.fillMaxWidth().height(320.dp),
@@ -98,7 +94,6 @@ fun ItemDetailsScreen(
 
                         Spacer(modifier = Modifier.height(20.dp))
 
-                        // Info Card (Rounded Rectangle)
                         Card(
                             shape = RoundedCornerShape(28.dp),
                             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -106,7 +101,7 @@ fun ItemDetailsScreen(
                         ) {
                             Column(modifier = Modifier.padding(24.dp)) {
                                 Text(
-                                    text = item.description ?: "Unknown Item",
+                                    text = item.description,
                                     style = MaterialTheme.typography.headlineSmall,
                                     fontWeight = FontWeight.ExtraBold
                                 )
@@ -117,14 +112,22 @@ fun ItemDetailsScreen(
                                 InfoRow(Icons.Default.LocationOn, "Location", item.location)
                                 Spacer(modifier = Modifier.height(16.dp))
                                 InfoRow(Icons.Default.DateRange, "Found on", item.created_at?.substringBefore("T") ?: "N/A")
+
                                 Spacer(modifier = Modifier.height(16.dp))
-                                InfoRow(Icons.Default.Phone, "Contact", item.phone_number ?: "Not provided")
+                                // "Founded by" field using the joined user data
+                                InfoRow(
+                                    icon = Icons.Default.Person,
+                                    label = "Founded by",
+                                    value = item.users?.full_name ?: "Anonymous"
+                                )
+
+                                Spacer(modifier = Modifier.height(16.dp))
+                                InfoRow(Icons.Default.Phone, "Contact", item.phone_number)
                             }
                         }
 
                         Spacer(modifier = Modifier.height(24.dp))
 
-                        // Share Button with Image Logic
                         Button(
                             onClick = {
                                 scope.launch {
@@ -141,6 +144,29 @@ fun ItemDetailsScreen(
                             Icon(Icons.Default.Share, contentDescription = null)
                             Spacer(Modifier.width(8.dp))
                             Text("Share with Photo", style = MaterialTheme.typography.titleMedium)
+                        }
+
+                        // Delete Button - only visible if the current user created this item
+                        if (item.user_id == viewModel.currentUserId) {
+                            Spacer(modifier = Modifier.height(12.dp))
+                            OutlinedButton(
+                                onClick = {
+                                    item.id?.let { id ->
+                                        viewModel.deleteItem(id) {
+                                            navController.popBackStack()
+                                        }
+                                    }
+                                },
+                                modifier = Modifier.fillMaxWidth().height(56.dp),
+                                shape = RoundedCornerShape(16.dp),
+                                colors = ButtonDefaults.outlinedButtonColors(
+                                    contentColor = MaterialTheme.colorScheme.error
+                                )
+                            ) {
+                                Icon(Icons.Default.Delete, contentDescription = null)
+                                Spacer(Modifier.width(8.dp))
+                                Text("Delete My Report", style = MaterialTheme.typography.titleMedium)
+                            }
                         }
                     }
                 }
@@ -169,7 +195,6 @@ fun InfoRow(icon: ImageVector, label: String, value: String) {
     }
 }
 
-// Background logic to handle image download and sharing
 suspend fun shareItemWithImage(context: Context, imageUrl: String, text: String) {
     withContext(Dispatchers.IO) {
         val loader = ImageLoader(context)
