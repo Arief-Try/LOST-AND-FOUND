@@ -3,8 +3,9 @@ package com.example.foundit.presentation.screens.profile
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.foundit.presentation.data.account.AccountService
 import dagger.hilt.android.lifecycle.HiltViewModel
+import io.github.jan.supabase.SupabaseClient
+import io.github.jan.supabase.auth.auth
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -13,63 +14,56 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
-    private val accountService: AccountService
+    private val supabase: SupabaseClient
 ) : ViewModel() {
 
+    // Using StateFlow to hold and expose the username and metadata
+    private val _userFullName = MutableStateFlow("Loading...")
+    val userFullName: StateFlow<String> = _userFullName.asStateFlow()
 
-    val previoususerId = accountService.currentUserId
+    private val _userEmail = MutableStateFlow("Loading...")
+    val userEmail: StateFlow<String> = _userEmail.asStateFlow()
 
-    val currentuserId: String
-        get() = accountService.currentUserId
+    private val _profilePictureUrl = MutableStateFlow<String?>(null)
+    val profilePictureUrl: StateFlow<String?> = _profilePictureUrl.asStateFlow()
 
-    private val currentUserName: String
-        get() = accountService.currentUserName
+    init {
+        loadGoogleProfile()
+    }
 
-    val memberSince: Long?
-        get() = accountService.accountCreationDate
-
-    private val currentUserProfilePicture: Uri?
-        get() = accountService.currentUserPhotoUrl
-
-    // dividing user name into firstName and lastName
-    private val splitUserName: List<String>
-        get() = currentUserName.split(" ", limit = 2)
-
-    private val userNameList: List<String>
-        get() {
-            return if (splitUserName.size == 2) listOf(splitUserName[0], splitUserName[1]) else listOf(splitUserName[0], "")
-        }
-
-
-    // Using StateFlow to hold and expose the username
-    private val _userFirstName = MutableStateFlow(userNameList[0])
-    val userFirstNames: StateFlow<String> = _userFirstName.asStateFlow()
-
-    private val _userLastName = MutableStateFlow(userNameList[1])
-    val userLastNames: StateFlow<String> = _userLastName.asStateFlow()
-
-    // Using StateFlow to hold and expose the profile picture
-    private val _profilePicture = MutableStateFlow(currentUserProfilePicture)
-    val profilePicture: StateFlow<Uri?> = _profilePicture.asStateFlow()
-
-
-    fun updateProfileData(firstName: String, lastName: String, profilePicture: Uri?) {
+    /**
+     * Pulls the 'full_name' and 'avatar_url' directly from the
+     * Google Metadata stored in the current Supabase session.
+     */
+    fun loadGoogleProfile() {
         viewModelScope.launch {
-            accountService.updateProfile(firstName, lastName, profilePicture)
-            updateProfileData()
+            val user = supabase.auth.currentUserOrNull()
+            user?.let {
+                // Google metadata keys are standard in Supabase
+                val name = it.userMetadata?.get("full_name")?.toString() ?: "User"
+                val avatar = it.userMetadata?.get("avatar_url")?.toString()
+                val email = it.email ?: ""
+
+                _userFullName.value = name
+                _profilePictureUrl.value = avatar
+                _userEmail.value = email
+            }
         }
     }
 
-    fun updateProfileData(){
-//        splitUserName = currentUserName.split(" ", limit = 2)
-        _userFirstName.value = userNameList[0]
-        _userLastName.value = userNameList[1]
-        _profilePicture.value = currentUserProfilePicture
-//        Log.d("profile", "aa _profilepicture: ${_profilePicture.value}")
-//        Log.d("profile", "a split: ${splitUserName}")
-//        Log.d("profile", "a list: ${userNameList}")
-//        Log.d("profile", "a _flow: ${_userFirstName.value}")
-//        Log.d("profile", "a flow: ${userLastNames.value}")
+    // Add this inside your ProfileViewModel class in ProfileViewModel.kt
+    fun logout() {
+        viewModelScope.launch {
+            try {
+                supabase.auth.signOut()
+            } catch (e: Exception) {
+                // Handle error
+            }
+        }
     }
 
+    // Function for manual refresh if needed
+    fun refreshProfile() {
+        loadGoogleProfile()
+    }
 }

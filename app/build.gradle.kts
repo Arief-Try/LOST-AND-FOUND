@@ -126,6 +126,9 @@ dependencies {
     implementation(libs.play.services.location)
     implementation(libs.accompanist.permissions)
 
+    // --- dependedncies for profile page ---
+    implementation("io.coil-kt:coil-compose:2.5.0")
+
     // --- Testing ---
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

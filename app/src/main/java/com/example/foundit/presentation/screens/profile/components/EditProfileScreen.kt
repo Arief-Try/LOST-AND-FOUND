@@ -5,30 +5,14 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Button
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -40,35 +24,20 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
-import com.example.foundit.R.drawable.ic_launcher_background
 import com.example.foundit.presentation.common.TheTopAppBar
 import com.example.foundit.presentation.screens.profile.ProfileViewModel
 
-//UI-Only Composable
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditProfileScreenContent(
     modifier: Modifier,
-    firstName: String,
-    lastName: String,
-    onFirstNameChange: (String) -> Unit,
-    onLastNameChange: (String) -> Unit,
+    fullName: String,
+    onFullNameChange: (String) -> Unit,
     onCancelClick: () -> Unit,
     onSaveClick: () -> Unit,
-    profilePicture: Uri?,
-    onProfilePictureChange: (Uri?) -> Unit,
+    profilePictureUrl: String?,
     navController: NavController
 ) {
-    //var profilePicture by remember { mutableStateOf(profilePic) }
-    val profilePicturePickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.PickVisualMedia(),
-        onResult = { uri ->
-            if (uri != null) {
-                //profilePicture = uri
-                onProfilePictureChange(uri)// Update profile picture only if a valid URI is selected
-            }
-        }
-    )
-
     Scaffold(
         topBar = { TheTopAppBar(title = "Edit Profile", navController = navController) }
     ) { paddingValues ->
@@ -79,169 +48,109 @@ fun EditProfileScreenContent(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // Profile picture Input Field
-            AsyncImage(
-                model = profilePicture ?: ic_launcher_background,
-                contentDescription = "Profile Picture",
-                modifier = modifier
-                    .size(180.dp)
-                    .clip(CircleShape)
-                    .clickable {
-                        // profile picture change logic
-                        profilePicturePickerLauncher.launch(
-                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-                        )
-                    },
-                contentScale = ContentScale.Crop
-            )
+            // Profile picture Display
+            if (!profilePictureUrl.isNullOrEmpty()) {
+                AsyncImage(
+                    model = profilePictureUrl,
+                    contentDescription = "Profile Picture",
+                    modifier = Modifier
+                        .size(180.dp)
+                        .clip(CircleShape),
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                Icon(
+                    imageVector = Icons.Default.AccountCircle,
+                    contentDescription = null,
+                    modifier = Modifier.size(180.dp),
+                    tint = MaterialTheme.colorScheme.outline
+                )
+            }
 
             Spacer(modifier = Modifier.height(26.dp))
 
             Column(
-                modifier = modifier
+                modifier = Modifier
                     .fillMaxWidth()
-                    .height(IntrinsicSize.Min)
                     .padding(horizontal = 32.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // First name Input Field
+                // Full Name Input Field
                 TextField(
-                    value = firstName,
-                    onValueChange = { onFirstNameChange(it.filter { char -> char.isLetter() }) },
+                    value = fullName,
+                    onValueChange = { onFullNameChange(it) },
                     singleLine = true,
-                    label = {
-                        Text(
-                            text = "First name",
-                        )
-                    },
+                    label = { Text("Full Name") },
                     modifier = Modifier.fillMaxWidth(),
                     keyboardOptions = KeyboardOptions(
                         capitalization = KeyboardCapitalization.Words,
-                        imeAction = ImeAction.Next
+                        imeAction = ImeAction.Done
                     ),
                     colors = TextFieldDefaults.colors(
                         focusedContainerColor = Color.Transparent,
-                        unfocusedContainerColor = Color.Transparent,
-                        errorContainerColor = MaterialTheme.colorScheme.onError
-                    )
-                )
-
-                Spacer(modifier = modifier.height(16.dp))
-
-                // Last name Input Field
-                TextField(
-                    value = lastName,
-                    onValueChange = { onLastNameChange(it.filter { char -> char.isLetter() }) },
-                    singleLine = true,
-                    label = { Text(text = "Last name") },
-                    modifier = Modifier.fillMaxWidth(),
-                    keyboardOptions = KeyboardOptions(
-                        capitalization = KeyboardCapitalization.Words,
-                    ),
-                    colors = TextFieldDefaults.colors(
-                        focusedContainerColor = Color.Transparent,
-                        unfocusedContainerColor = Color.Transparent,
-                        errorContainerColor = MaterialTheme.colorScheme.onError
+                        unfocusedContainerColor = Color.Transparent
                     )
                 )
             }
 
-            Spacer(modifier = modifier.height(30.dp))
+            Spacer(modifier = Modifier.height(30.dp))
 
             Row(
                 horizontalArrangement = Arrangement.SpaceEvenly,
-                modifier = modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 80.dp)
+                modifier = Modifier.fillMaxWidth()
             ) {
-
-                // Cancel Button
-                Button(
-                    onClick = { onCancelClick() }
-                ) {
-                    Text(
-                        text = "Cancel",
-                        fontSize = 20.sp,
-                        modifier = modifier
-                            .padding(5.dp, 2.dp)
-                    )
+                Button(onClick = onCancelClick) {
+                    Text(text = "Cancel", fontSize = 18.sp)
                 }
 
-                //Save Button
                 Button(
-                    onClick = { onSaveClick() },
-                    enabled = firstName.isNotBlank() && lastName.isNotBlank(),
+                    onClick = onSaveClick,
+                    enabled = fullName.isNotBlank()
                 ) {
-                    Text(
-                        text = "Save Changes",
-                        fontSize = 20.sp,
-                        modifier = modifier
-                            .padding(5.dp, 2.dp)
-                    )
+                    Text(text = "Save Changes", fontSize = 18.sp)
                 }
             }
+
+            // Note for User
+            Text(
+                text = "Note: Profile details are managed via Google",
+                fontSize = 12.sp,
+                color = Color.Gray,
+                modifier = Modifier.padding(top = 20.dp)
+            )
         }
     }
 }
 
-
-//ViewModel Composable
 @Composable
 fun EditProfileScreen(
     modifier: Modifier,
     navController: NavController,
     viewModel: ProfileViewModel
 ) {
-//    val userName = viewModel.userName
-//    val profilePictures: Uri? = viewModel.profilePicture
-    val userFirstName by viewModel.userFirstNames.collectAsState()
-    val userLastName by viewModel.userLastNames.collectAsState()
-    val profilePictures by viewModel.profilePicture.collectAsState()
+    // Collect the new unified states from ViewModel
+    val userFullName by viewModel.userFullName.collectAsState()
+    val avatarUrl by viewModel.profilePictureUrl.collectAsState()
 
+    // Local state for editing
+    var fullNameState by remember { mutableStateOf("") }
 
-    //Profile Heading Card
-    var profileFirstName by remember { mutableStateOf(userFirstName) }
-    var profileLastName by remember { mutableStateOf(userLastName) }
-//    var profileFirstName by remember { mutableStateOf(profileData?.firstName ?: "") }
-//    var profileLastName by remember { mutableStateOf(profileData?.lastName ?: "") }
-    var profilePicture by remember { mutableStateOf(profilePictures) }
-
+    // Sync local state when ViewModel data loads
+    LaunchedEffect(userFullName) {
+        fullNameState = userFullName
+    }
 
     EditProfileScreenContent(
         modifier = modifier,
-        firstName = profileFirstName,
-        lastName = profileLastName,
-        onFirstNameChange = { profileFirstName = it },
-        onLastNameChange = { profileLastName = it },
+        fullName = fullNameState,
+        onFullNameChange = { fullNameState = it },
         onCancelClick = { navController.popBackStack() },
         onSaveClick = {
-            viewModel.updateProfileData(firstName = profileFirstName, lastName = profileLastName, profilePicture = profilePicture)
+            // Usually, we don't update Google metadata locally,
+            // but you can add a function to ViewModel if needed.
             navController.popBackStack()
         },
-        profilePicture = profilePicture,
-        onProfilePictureChange = { profilePicture = it},
-        navController = navController,
+        profilePictureUrl = avatarUrl,
+        navController = navController
     )
-
 }
-
-
-
-
-//@Preview(showBackground = true, showSystemUi = true)
-//@Composable
-//fun PreviewEditProfileScreen() {
-//    EditProfileScreenContent(
-//        modifier = Modifier,
-//        firstName = "Musaib",
-//        lastName = "Shabir",
-//        onFirstNameChange = {},
-//        onLastNameChange = {},
-//        onCancelClick = {},
-//        onSaveClick = {},
-//        navController = NavController(LocalContext.current),
-//        profilePic = null
-//    )
-//}
-
