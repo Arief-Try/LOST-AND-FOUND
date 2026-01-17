@@ -32,46 +32,52 @@ class ProgressViewModel @Inject constructor(
     private val _uiState = MutableStateFlow<ItemUiState>(ItemUiState.Loading)
     val uiState: StateFlow<ItemUiState> = _uiState.asStateFlow()
 
-    private var allItems = mutableListOf<Item>()
     private var currentOffset = 0L
-    private val pageSize = 5L // Strictly limited to 5 per page
+    private val pageSize = 5L
 
-    init {
-        fetchItems(isRefresh = true)
-    }
-
-    fun fetchItems(isRefresh: Boolean = false) {
+    // We pass the 'tab' and 'search' to the fetch function
+    fun fetchItems(type: String, query: String = "", isRefresh: Boolean = false) {
         viewModelScope.launch {
-            if (isRefresh) {
-                _uiState.value = ItemUiState.Loading
-                currentOffset = 0L
-                allItems.clear()
-            }
+            _uiState.value = ItemUiState.Loading
+
+            if (isRefresh) currentOffset = 0L
 
             try {
                 val userId = supabase.auth.currentUserOrNull()?.id
 
-                // Fetch from Supabase with Order and Range
-                val newItems = supabase.postgrest.from("items")
+                val result = supabase.postgrest.from("items")
                     .select {
+                        filter {
+                            if (type != "My Reports") {
+                                eq("item_type", type.lowercase())
+                            } else if (userId != null) {
+                                eq("user_id", userId)
+                            }
+                            if (query.isNotEmpty()) {
+                                or {
+                                    ilike("location", "%$query%")
+                                    ilike("category", "%$query%")
+                                }
+                            }
+                        }
                         order("created_at", order = Order.DESCENDING)
                         range(currentOffset, currentOffset + pageSize - 1)
                     }
                     .decodeList<Item>()
 
-                allItems.addAll(newItems)
-                currentOffset += pageSize
-
-                // Filter lists for the tabs
-                val lostItems = allItems.filter { it.item_type.equals("lost", ignoreCase = true) }
-                val foundItems = allItems.filter { it.item_type.equals("found", ignoreCase = true) }
-                val myReportItems = if (userId != null) allItems.filter { it.user_id == userId } else emptyList()
-
-                _uiState.value = ItemUiState.Success(lostItems, foundItems, myReportItems)
+                _uiState.value = ItemUiState.Success(
+                    lostItems = if (type == "Lost") result else emptyList(),
+                    foundItems = if (type == "Found") result else emptyList(),
+                    myReportItems = if (type == "My Reports") result else emptyList()
+                )
 
             } catch (e: Exception) {
-                _uiState.value = ItemUiState.Error("Failed to load items: ${e.message}")
+                _uiState.value = ItemUiState.Error("Failed: ${e.message}")
             }
         }
+    }
+    fun loadNextPage(type: String, query: String) {
+        currentOffset += pageSize
+        fetchItems(type, query, isRefresh = false)
     }
 }
