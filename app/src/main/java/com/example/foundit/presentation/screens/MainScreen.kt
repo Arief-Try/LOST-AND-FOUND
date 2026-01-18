@@ -115,7 +115,7 @@ fun MainScreen(modifier: Modifier = Modifier) {
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = NavRoutes.HOME, 
+            startDestination = NavRoutes.SPLASH,
             modifier = modifier.padding(innerPadding)
         ) {
             composable(NavRoutes.SPLASH) {
@@ -216,7 +216,7 @@ fun MainScreen(modifier: Modifier = Modifier) {
             }
 
             composable(NavRoutes.PROFILE) {
-                ProfileScreen(modifier, navController, profileViewModel)
+                ProfileScreen(modifier, navController, profileViewModel, authViewModel)
             }
 
             composable(NavRoutes.ACCOUNT_CENTER) {

@@ -21,20 +21,21 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
+import com.example.foundit.auth.AuthViewModel
 import com.example.foundit.presentation.data.navigation.NavRoutes
-import io.github.jan.supabase.auth.auth // IMPORTANT: Needed for signOut()
-import kotlinx.coroutines.launch // IMPORTANT: Fixes 'launch' error
+import kotlinx.coroutines.launch
 
 @Composable
 fun ProfileScreen(
     modifier: Modifier = Modifier,
     navController: NavController,
-    viewModel: ProfileViewModel
+    profileViewModel: ProfileViewModel,
+    authViewModel: AuthViewModel
 ) {
     // Collect the real data from the ViewModel
-    val fullName by viewModel.userFullName.collectAsState()
-    val email by viewModel.userEmail.collectAsState()
-    val avatarUrl by viewModel.profilePictureUrl.collectAsState()
+    val fullName by profileViewModel.userFullName.collectAsState()
+    val email by profileViewModel.userEmail.collectAsState()
+    val avatarUrl by profileViewModel.profilePictureUrl.collectAsState()
 
     // Create a coroutine scope for the logout function
     val scope = rememberCoroutineScope()
@@ -45,15 +46,11 @@ fun ProfileScreen(
         profilePictureUrl = avatarUrl,
         email = email,
         onLogoutClick = {
-            // Use the supabase client instance already inside your viewModel
-            scope.launch {
-                try {
-                    viewModel.logout() // We use a logout function in ViewModel (defined below)
-                    navController.navigate(NavRoutes.HOME) {
+            authViewModel.logout { success ->
+                if (success) {
+                    navController.navigate(NavRoutes.SIGN_UP) {
                         popUpTo(0) { inclusive = true }
                     }
-                } catch (e: Exception) {
-                    // Handle logout error if necessary
                 }
             }
         }

@@ -11,6 +11,8 @@ import io.github.jan.supabase.auth.providers.builtin.IDToken
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import android.util.Log
+import kotlinx.coroutines.tasks.await
+
 @HiltViewModel
 class AuthViewModel @Inject constructor(
     private val googleSignInClient: GoogleSignInClient,
@@ -35,6 +37,19 @@ class AuthViewModel @Inject constructor(
                 // ADD THIS LINE to see the real reason in Logcat
                 Log.e("AUTH_ERROR", "Supabase Error: ${e.localizedMessage}")
                 e.printStackTrace()
+                onResult(false)
+            }
+        }
+    }
+
+    fun logout(onResult: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            try {
+                supabaseClient.auth.signOut()
+                googleSignInClient.signOut().await()
+                onResult(true)
+            } catch (e: Exception) {
+                Log.e("AUTH_ERROR", "Logout Error: ${e.localizedMessage}")
                 onResult(false)
             }
         }
