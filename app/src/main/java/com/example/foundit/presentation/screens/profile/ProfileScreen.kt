@@ -1,5 +1,8 @@
 package com.example.foundit.presentation.screens.profile
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -8,6 +11,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
@@ -16,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -32,13 +37,30 @@ fun ProfileScreen(
     profileViewModel: ProfileViewModel,
     authViewModel: AuthViewModel
 ) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+
     // Collect the real data from the ViewModel
     val fullName by profileViewModel.userFullName.collectAsState()
     val email by profileViewModel.userEmail.collectAsState()
     val avatarUrl by profileViewModel.profilePictureUrl.collectAsState()
 
-    // Create a coroutine scope for the logout function
-    val scope = rememberCoroutineScope()
+    // Image picker launcher
+    val imagePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let {
+            // Convert Uri to ByteArray and upload
+            scope.launch {
+                val inputStream = context.contentResolver.openInputStream(it)
+                val bytes = inputStream?.readBytes()
+                if (bytes != null) {
+                    profileViewModel.uploadProfilePicture(bytes)
+                }
+                inputStream?.close()
+            }
+        }
+    }
 
     ProfileScreenContent(
         modifier = modifier,
@@ -53,6 +75,9 @@ fun ProfileScreen(
                     }
                 }
             }
+        },
+        onEditPictureClick = {
+            imagePickerLauncher.launch("image/*")
         }
     )
 }
@@ -63,7 +88,8 @@ fun ProfileScreenContent(
     profileFullName: String,
     profilePictureUrl: String?,
     email: String,
-    onLogoutClick: () -> Unit
+    onLogoutClick: () -> Unit,
+    onEditPictureClick: () -> Unit
 ) {
     Scaffold { padding ->
         Column(
@@ -79,27 +105,55 @@ fun ProfileScreenContent(
                 shape = RoundedCornerShape(24.dp),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(200.dp),
+                    .height(240.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
             ) {
                 Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-                    if (!profilePictureUrl.isNullOrEmpty()) {
-                        AsyncImage(
-                            model = profilePictureUrl,
-                            contentDescription = "Google Profile Picture",
-                            modifier = Modifier
-                                .size(120.dp)
-                                .clip(CircleShape),
-                            contentScale = ContentScale.Crop
-                        )
-                    } else {
-                        Icon(
-                            imageVector = Icons.Default.AccountCircle,
-                            contentDescription = "Placeholder",
-                            modifier = Modifier
-                                .size(120.dp)
-                                .clip(CircleShape),
-                            tint = MaterialTheme.colorScheme.outline
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Box(contentAlignment = Alignment.BottomEnd) {
+                            if (!profilePictureUrl.isNullOrEmpty()) {
+                                AsyncImage(
+                                    model = profilePictureUrl,
+                                    contentDescription = "Profile Picture",
+                                    modifier = Modifier
+                                        .size(120.dp)
+                                        .clip(CircleShape),
+                                    contentScale = ContentScale.Crop
+                                )
+                            } else {
+                                Icon(
+                                    imageVector = Icons.Default.AccountCircle,
+                                    contentDescription = "Placeholder",
+                                    modifier = Modifier
+                                        .size(120.dp)
+                                        .clip(CircleShape),
+                                    tint = MaterialTheme.colorScheme.outline
+                                )
+                            }
+                            
+                            // Edit Icon Button
+                            SmallFloatingActionButton(
+                                onClick = onEditPictureClick,
+                                shape = CircleShape,
+                                containerColor = MaterialTheme.colorScheme.primary,
+                                contentColor = MaterialTheme.colorScheme.onPrimary,
+                                modifier = Modifier.size(32.dp).offset(x = 4.dp, y = 4.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Edit,
+                                    contentDescription = "Change Picture",
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
+                        }
+                        
+                        Spacer(modifier = Modifier.height(16.dp))
+                        
+                        Text(
+                            text = "Change Profile Picture",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(bottom = 8.dp)
                         )
                     }
                 }
