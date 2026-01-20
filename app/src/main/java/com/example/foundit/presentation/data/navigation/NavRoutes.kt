@@ -7,7 +7,7 @@ object NavRoutes {
     const val SIGN_UP = "SignUp"
     const val HOME = "Home"
     const val USER_ITEM_INPUT_SCREEN = "UserItemInputScreen"
-    const val PROGRESS = "Progress"
+    const val PROGRESS = "Item List"
     const val NOTIFICATIONS = "Notifications"
     const val PROFILE = "Profile"
     const val ACCOUNT_CENTER = "AccountCenter"

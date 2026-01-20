@@ -11,6 +11,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
@@ -36,13 +37,12 @@ fun ProfileScreen(
     profileViewModel: ProfileViewModel,
     authViewModel: AuthViewModel
 ) {
-    val context = LocalContext.current
-    val scope = rememberCoroutineScope()
-
     // Collect the real data from the ViewModel
     val fullName by profileViewModel.userFullName.collectAsState()
     val email by profileViewModel.userEmail.collectAsState()
     val avatarUrl by profileViewModel.profilePictureUrl.collectAsState()
+
+    // REMOVED: imagePickerLauncher logic and LocalContext/CoroutineScope if no longer used
 
     ProfileScreenContent(
         modifier = modifier,
@@ -58,6 +58,7 @@ fun ProfileScreen(
                 }
             }
         }
+        // REMOVED: onEditPictureClick parameter
     )
 }
 
@@ -68,6 +69,7 @@ fun ProfileScreenContent(
     profilePictureUrl: String?,
     email: String,
     onLogoutClick: () -> Unit
+    // REMOVED: onEditPictureClick parameter
 ) {
     Scaffold { padding ->
         Column(
@@ -88,7 +90,7 @@ fun ProfileScreenContent(
             ) {
                 Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        // Display the profile picture or a placeholder
+                        // Removed the Box wrap that held the FAB and the SmallFloatingActionButton
                         if (!profilePictureUrl.isNullOrEmpty()) {
                             AsyncImage(
                                 model = profilePictureUrl,
@@ -109,14 +111,7 @@ fun ProfileScreenContent(
                             )
                         }
 
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        Text(
-                            text = "Profile Picture",
-                            style = MaterialTheme.typography.labelLarge,
-                            color = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.padding(bottom = 8.dp)
-                        )
+                        // REMOVED: Spacer and "Change Profile Picture" Text
                     }
                 }
             }
@@ -143,7 +138,6 @@ fun ProfileScreenContent(
         }
     }
 }
-
 @Composable
 fun ProfileInfoItem(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, value: String) {
     Row(
