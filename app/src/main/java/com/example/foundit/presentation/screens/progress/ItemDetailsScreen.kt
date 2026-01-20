@@ -111,13 +111,13 @@ fun ItemDetailsScreen(
 
                                 InfoRow(Icons.Default.LocationOn, "Location", item.location)
                                 Spacer(modifier = Modifier.height(16.dp))
-                                InfoRow(Icons.Default.DateRange, "Found on", item.created_at?.substringBefore("T") ?: "N/A")
+                                InfoRow(Icons.Default.DateRange, "Report date", item.created_at?.substringBefore("T") ?: "N/A")
 
                                 Spacer(modifier = Modifier.height(16.dp))
                                 // "Founded by" field using the joined user data
                                 InfoRow(
                                     icon = Icons.Default.Person,
-                                    label = "Founded by",
+                                    label = "Reported by",
                                     value = item.users?.full_name ?: "Anonymous"
                                 )
 
