@@ -11,7 +11,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.AccountCircle
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
@@ -45,23 +44,6 @@ fun ProfileScreen(
     val email by profileViewModel.userEmail.collectAsState()
     val avatarUrl by profileViewModel.profilePictureUrl.collectAsState()
 
-    // Image picker launcher
-    val imagePickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri: Uri? ->
-        uri?.let {
-            // Convert Uri to ByteArray and upload
-            scope.launch {
-                val inputStream = context.contentResolver.openInputStream(it)
-                val bytes = inputStream?.readBytes()
-                if (bytes != null) {
-                    profileViewModel.uploadProfilePicture(bytes)
-                }
-                inputStream?.close()
-            }
-        }
-    }
-
     ProfileScreenContent(
         modifier = modifier,
         profileFullName = fullName,
@@ -75,9 +57,6 @@ fun ProfileScreen(
                     }
                 }
             }
-        },
-        onEditPictureClick = {
-            imagePickerLauncher.launch("image/*")
         }
     )
 }
@@ -88,8 +67,7 @@ fun ProfileScreenContent(
     profileFullName: String,
     profilePictureUrl: String?,
     email: String,
-    onLogoutClick: () -> Unit,
-    onEditPictureClick: () -> Unit
+    onLogoutClick: () -> Unit
 ) {
     Scaffold { padding ->
         Column(
@@ -110,47 +88,31 @@ fun ProfileScreenContent(
             ) {
                 Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Box(contentAlignment = Alignment.BottomEnd) {
-                            if (!profilePictureUrl.isNullOrEmpty()) {
-                                AsyncImage(
-                                    model = profilePictureUrl,
-                                    contentDescription = "Profile Picture",
-                                    modifier = Modifier
-                                        .size(120.dp)
-                                        .clip(CircleShape),
-                                    contentScale = ContentScale.Crop
-                                )
-                            } else {
-                                Icon(
-                                    imageVector = Icons.Default.AccountCircle,
-                                    contentDescription = "Placeholder",
-                                    modifier = Modifier
-                                        .size(120.dp)
-                                        .clip(CircleShape),
-                                    tint = MaterialTheme.colorScheme.outline
-                                )
-                            }
-                            
-                            // Edit Icon Button
-                            SmallFloatingActionButton(
-                                onClick = onEditPictureClick,
-                                shape = CircleShape,
-                                containerColor = MaterialTheme.colorScheme.primary,
-                                contentColor = MaterialTheme.colorScheme.onPrimary,
-                                modifier = Modifier.size(32.dp).offset(x = 4.dp, y = 4.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Edit,
-                                    contentDescription = "Change Picture",
-                                    modifier = Modifier.size(16.dp)
-                                )
-                            }
+                        // Display the profile picture or a placeholder
+                        if (!profilePictureUrl.isNullOrEmpty()) {
+                            AsyncImage(
+                                model = profilePictureUrl,
+                                contentDescription = "Profile Picture",
+                                modifier = Modifier
+                                    .size(120.dp)
+                                    .clip(CircleShape),
+                                contentScale = ContentScale.Crop
+                            )
+                        } else {
+                            Icon(
+                                imageVector = Icons.Default.AccountCircle,
+                                contentDescription = "Placeholder",
+                                modifier = Modifier
+                                    .size(120.dp)
+                                    .clip(CircleShape),
+                                tint = MaterialTheme.colorScheme.outline
+                            )
                         }
-                        
+
                         Spacer(modifier = Modifier.height(16.dp))
-                        
+
                         Text(
-                            text = "Change Profile Picture",
+                            text = "Profile Picture",
                             style = MaterialTheme.typography.labelLarge,
                             color = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.padding(bottom = 8.dp)
